@@ -2,12 +2,13 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 
-// This repo is `ilanamost/ai-dev`, so its GitHub Pages project site serves from
-// `https://ilanamost.github.io/ai-dev/` rather than the domain root — every built
-// asset URL needs that prefix. Only the `production` build targets Pages; dev and
-// every other mode stay at the root, so they are not forced onto a path prefix
-// they do not need. If this repository is ever renamed, update this value.
-const PAGES_BASE = '/ai-dev/'
+// This repo is `ilanamost/ai-interview-simulator`, so its GitHub Pages project site
+// serves from `https://ilanamost.github.io/ai-interview-simulator/` rather than the
+// domain root — every built asset URL needs that prefix. Only the `production` build
+// targets Pages; dev and every other mode stay at the root, so they are not forced
+// onto a path prefix they do not need. If this repository is ever renamed, update
+// this value.
+const PAGES_BASE = '/ai-interview-simulator/'
 
 export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? PAGES_BASE : '/',
