@@ -12,7 +12,11 @@ node_modules
 
 # Agent guardrail/config and docs directories
 .claude/
-.github/
+# Everything under .github/ except workflows/ — real deployment infra (e.g.
+# deploy-pages.yml) needs to be trackable and pushed; only workflows/ is
+# carved out of the exclusion below.
+.github/*
+!.github/workflows/
 .rule/
 .doc/
 
