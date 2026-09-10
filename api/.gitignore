@@ -1,0 +1,10 @@
+node_modules
+dist
+# Real env files carry secrets and are never committed — any suffix, so a mode
+# nobody anticipated yet is covered too. The *.example templates are committed
+# on purpose: they are placeholder-valued and safe to read.
+.env
+.env.*
+!.env.example
+!.env.*.example
+coverage

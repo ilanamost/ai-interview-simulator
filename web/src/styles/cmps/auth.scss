@@ -1,0 +1,76 @@
+/* Login and user-settings forms. */
+
+.auth-page {
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.auth-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border-radius: var(--radius-md);
+  background-color: var(--clr-surface-alt);
+}
+
+.auth-tab {
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--clr-text-muted);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+
+  &.is-active {
+    background-color: var(--clr-surface);
+    color: var(--clr-text);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.field-error {
+  font-size: var(--fs-sm);
+  color: var(--clr-weak);
+}
+
+.auth-fieldset {
+  padding: var(--sp-4);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+
+  & > legend {
+    padding-inline: var(--sp-2);
+    font-weight: 600;
+  }
+}
+
+.avatar-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+/* The label is the visible control, so the input itself stays out of the layout
+   without `display: none` (which would take it out of the accessibility tree). */
+.avatar-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.avatar-pick {
+  align-self: flex-start;
+}
+
+.avatar-remove {
+  align-self: flex-start;
+}

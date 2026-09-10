@@ -1,0 +1,105 @@
+/* Milestone celebration popup. `prefers-reduced-motion` is already handled globally
+   in `setup/reset.scss`, so nothing here needs its own opt-out — the same arrangement
+   `animation.scss` relies on. */
+
+@keyframes encouragement-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(var(--encouragement-rise));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A short overshoot on the icon alone, so the celebration reads as a beat rather
+   than the panel simply appearing. */
+@keyframes encouragement-icon-bounce {
+  0% {
+    transform: scale(0.4);
+  }
+
+  60% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.encouragement-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background-color: rgb(20 25 45 / 45%);
+}
+
+.encouragement-panel {
+  --encouragement-rise: var(--sp-4);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  padding: var(--sp-6) var(--sp-5);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--clr-surface);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  animation: encouragement-pop-in 260ms ease-out both;
+
+  & .encouragement-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--clr-accent-soft);
+    color: var(--clr-accent);
+    animation: encouragement-icon-bounce 420ms ease-out both;
+  }
+
+  & .encouragement-message {
+    font-size: var(--fs-xl);
+    font-weight: 650;
+  }
+
+  & .encouragement-note {
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+  }
+
+  & .encouragement-close {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    padding: var(--sp-2);
+    color: var(--clr-text-muted);
+  }
+}
+
+/*
+  The backdrop fades on its own; the panel's own `@keyframes` above carry the entrance,
+  so the enter transition here only has to not fight them.
+*/
+.encouragement-enter-active,
+.encouragement-leave-active {
+  transition: opacity 200ms ease;
+}
+
+.encouragement-enter-from,
+.encouragement-leave-to {
+  opacity: 0;
+}

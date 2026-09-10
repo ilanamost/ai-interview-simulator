@@ -1,0 +1,42 @@
+.progress-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  & .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+  }
+
+  & .track {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background-color: var(--clr-surface-alt);
+    overflow: hidden;
+  }
+
+  & .bar {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background-color: var(--clr-accent);
+    transition: width var(--transition);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

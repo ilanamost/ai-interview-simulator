@@ -1,0 +1,27 @@
+/* Entrance animation for cards. `prefers-reduced-motion` is already handled globally
+   in `setup/reset.scss`, so nothing here needs its own opt-out. */
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--card-in-rise));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/**
+ * `both` matters twice: it holds the card at opacity 0 through a staggered
+ * `animation-delay`, and it leaves the finished state applied afterwards.
+ *
+ * A card inside a collapsed accordion panel is `display: none`, so its animation
+ * only starts when the panel opens — the sequence plays when it is actually seen.
+ */
+.card-in {
+  --card-in-rise: var(--sp-3);
+
+  animation: card-in 320ms ease-out both;
+}

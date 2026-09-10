@@ -1,0 +1,32 @@
+/* Header route links. The active state comes from vue-router's own classes. */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  margin-inline-start: var(--sp-4);
+}
+
+.nav-link {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--clr-text-muted);
+  text-decoration: none;
+  transition:
+    color var(--transition),
+    background-color var(--transition);
+
+  &:hover {
+    background-color: var(--clr-surface-alt);
+    color: var(--clr-text);
+  }
+
+  /* Not `router-link-exact-active`: an active tab should also read as active on a
+     query string or trailing slash, which only the looser class survives. */
+  &.router-link-active {
+    background-color: var(--clr-accent-soft);
+    color: var(--clr-accent);
+  }
+}

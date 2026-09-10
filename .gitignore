@@ -1,0 +1,25 @@
+node_modules
+
+# Real env files carry secrets and are never committed — any suffix, so a mode
+# nobody anticipated yet is covered too. The *.example templates are committed
+# on purpose: they are placeholder-valued and safe to read.
+.env
+.env.*
+!.env*.example
+
+*.local
+.DS_Store
+
+# Agent guardrail/config and docs directories
+.claude/
+.github/
+.rule/
+.doc/
+
+# Agent instruction and orchestration files
+AGENTS.md
+CLAUDE.md
+dev-loop.js
+dev-loop.prompt.md
+trace-agent.js
+.orchestrate/

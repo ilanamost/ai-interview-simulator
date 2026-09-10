@@ -1,0 +1,59 @@
+/* Reports history: the filter form and the list of past interviews. */
+.history-filters {
+  & .clear-filters {
+    align-self: flex-start;
+  }
+}
+
+.history-list {
+  gap: var(--sp-3);
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--clr-text);
+  text-decoration: none;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+
+  &:hover {
+    border-color: var(--clr-accent);
+    box-shadow: var(--shadow-md);
+  }
+
+  & .history-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-width: 0;
+  }
+
+  & .history-row-config {
+    font-weight: 600;
+  }
+
+  & .history-row-end {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    color: var(--clr-text-muted);
+  }
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--clr-text-muted);
+
+  &:hover {
+    color: var(--clr-accent);
+  }
+}

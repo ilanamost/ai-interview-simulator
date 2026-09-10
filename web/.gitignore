@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.*
+# ...but the committed placeholder templates are not secrets — `.env.*` above would
+# otherwise swallow .env.staging.example / .env.production.example.
+!.env*.example
+*.local
+.DS_Store
+
+# Generated at runtime by report-pdf.service.ts's downloadReportPdf(); never a source file.
+interview-report-*.pdf

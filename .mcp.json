@@ -1,0 +1,21 @@
+{
+  "$comment": "Project-scoped MCP servers, committed so a clone of this repo gets the same tools. No secret is stored here — ${FIGMA_API_KEY} and ${LINEAR_API_KEY} are expanded from the environment, which is why the real values belong in the gitignored root .env. dev-loop.js calls dotenv.config() and passes process.env down to every agent it spawns, so the keys reach the sub-agents. Approval for these servers is granted by enabledMcpjsonServers in .claude/settings.json.",
+  "mcpServers": {
+    "figma": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}"
+      }
+    },
+    "linear": {
+      "$comment": "Linear's official server. It accepts a raw Linear API key as the bearer token, which avoids a per-machine OAuth login — the agents dev-loop.js spawns run headless and cannot complete an interactive auth flow. Same key dev-loop.js already uses for its direct GraphQL fallback in createLinearClient().",
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp",
+      "headers": {
+        "Authorization": "Bearer ${LINEAR_API_KEY}"
+      }
+    }
+  }
+}

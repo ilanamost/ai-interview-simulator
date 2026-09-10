@@ -1,0 +1,123 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  & > label {
+    font-weight: 600;
+  }
+
+  & .hint {
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+  }
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.control {
+  padding: var(--sp-3);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  background-color: var(--clr-surface);
+  transition: border-color var(--transition);
+
+  &:hover:not(:disabled) {
+    border-color: var(--clr-accent);
+  }
+
+  &:disabled {
+    background-color: var(--clr-surface-alt);
+    cursor: not-allowed;
+  }
+}
+
+/* Wraps an input so the reveal button can sit inside the input's right edge. The
+   input keeps its own `.control` styling, including the focus ring around it. */
+.password-field {
+  position: relative;
+  display: flex;
+
+  & > .control {
+    flex: 1;
+    min-width: 0;
+    padding-inline-end: var(--sp-7);
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-7);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: color var(--transition);
+
+  &:hover {
+    color: var(--clr-text);
+  }
+}
+
+textarea.control {
+  min-height: 9rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* The native dropdown arrow is drawn by the browser inside the select's own padding
+   box, so it can't be pushed outside that padding with spacing alone — `appearance:
+   none` drops it and `.select-arrow` draws a replacement in its own end-aligned slot,
+   the same wrapper + absolutely-positioned-control shape as `.password-field` above. */
+.select-field {
+  position: relative;
+  display: flex;
+
+  & > select.control {
+    flex: 1;
+    min-width: 0;
+    padding-inline-end: var(--sp-7);
+    appearance: none;
+  }
+}
+
+.select-arrow {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-7);
+  color: var(--clr-text-muted);
+  pointer-events: none;
+}
+
+.answer-input {
+  & .meta {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+  }
+
+  /* `margin-left: auto` rather than `justify-content: space-between`, so the
+     counts stay right-aligned in browsers where the mic never renders. */
+  & .meta-counts {
+    display: flex;
+    gap: var(--sp-3);
+    margin-left: auto;
+  }
+}

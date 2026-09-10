@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>AI Interview Simulator</title>
+    <!--
+      Applies a stored theme choice before the first paint, so a reload never flashes
+      the previous theme. This has to run here, ahead of the app module: by the time
+      Vue mounts, the wrong colors are already on screen. Nothing stored leaves the
+      attribute unset, which is how "follow the system preference" stays the default.
+      Keep the key in sync with `web/src/services/theme.service.ts`.
+    -->
+    <script>
+      ;(function () {
+        try {
+          var theme = localStorage.getItem('theme-preference')
+          if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+        } catch (err) {
+          // Storage disabled (private browsing) — fall back to the system preference.
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

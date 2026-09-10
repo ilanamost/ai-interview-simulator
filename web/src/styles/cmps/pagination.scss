@@ -1,0 +1,13 @@
+/* Pager under a paged list: two bounded controls with the position between them. */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+
+  & .pagination-label {
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+  }
+}

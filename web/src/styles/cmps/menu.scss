@@ -1,0 +1,91 @@
+/* Header identity block: avatar + settings dropdown. */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  border: 2px solid var(--clr-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text-muted);
+  text-decoration: none;
+  transition: border-color var(--transition);
+
+  &:hover {
+    border-color: var(--clr-accent);
+  }
+
+  & > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.avatar-lg {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.settings-menu {
+  position: relative;
+}
+
+/* Shared shape for the header's icon-only `.btn-ghost` controls. */
+.menu-trigger,
+.theme-toggle {
+  padding: var(--sp-2);
+  color: var(--clr-text-muted);
+}
+
+/*
+  The toggle is the first header control and the only one a signed-out visitor sees,
+  so it carries the auto margin that pushes the whole control cluster to the far end.
+*/
+.theme-toggle {
+  margin-left: auto;
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 11rem;
+  padding: var(--sp-1);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  background-color: var(--clr-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--clr-text);
+  font-size: var(--fs-base);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition);
+
+  &:hover {
+    background-color: var(--clr-surface-alt);
+  }
+}

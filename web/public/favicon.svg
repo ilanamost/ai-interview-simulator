@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+  <!--
+    The header brand mark is lucide's MessagesSquare, so the tab uses the same two
+    stacked speech bubbles in the accent colour #ff634a (the clr-accent token).
+    Simplified for a 16px canvas: a heavier stroke on the back bubble, the front one
+    filled solid so the silhouette survives when the icon is only a few pixels tall.
+  -->
+  <path
+    d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"
+    fill="none"
+    stroke="#ff634a"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2Z"
+    fill="#ff634a"
+    stroke="#ff634a"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+</svg>

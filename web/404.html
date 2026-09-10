@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>AI Interview Simulator</title>
+    <!--
+      GitHub Pages has no server-side rewrite, so a hard reload or a direct link to
+      any path but the site root (/interview, /report, ...) never reaches index.html.
+      Pages serves this file for every unmatched path instead, and because it boots
+      the same app bundle, Vue Router reads the original URL and renders that route
+      client-side. Invisible to a visitor — there is no redirect and the URL is left
+      alone.
+
+      This is a Vite HTML entry (registered in vite.config.ts's rollupOptions.input),
+      not a `public/` file, so Vite injects the same hashed asset URLs under the same
+      `base` as index.html. A verbatim copy in `public/` would be emitted untouched
+      and would still point at /src/main.ts, which does not exist in a build.
+
+      Keep this shell in sync with index.html.
+    -->
+    <!--
+      Applies a stored theme choice before the first paint, so a reload never flashes
+      the previous theme. This has to run here, ahead of the app module: by the time
+      Vue mounts, the wrong colors are already on screen. Nothing stored leaves the
+      attribute unset, which is how "follow the system preference" stays the default.
+      Keep the key in sync with `web/src/services/theme.service.ts`.
+    -->
+    <script>
+      ;(function () {
+        try {
+          var theme = localStorage.getItem('theme-preference')
+          if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+        } catch (err) {
+          // Storage disabled (private browsing) — fall back to the system preference.
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
