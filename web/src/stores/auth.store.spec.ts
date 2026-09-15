@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from './auth.store'
 import { AuthError, type AuthSource } from '@/services/auth.service'
+import { AuthStatus } from '@/types/auth'
 import { makeUser } from '@/test/auth-fixture'
 
 /**
@@ -52,7 +53,7 @@ describe('auth store', () => {
 
       expect(store.isAuthenticated).toBe(true)
       expect(store.user?.email).toBe('dev@example.com')
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
     })
 
     it('resolves to signed out without an error when nobody is signed in', async () => {
@@ -63,7 +64,7 @@ describe('auth store', () => {
 
       expect(result).toBe(false)
       expect(store.isAuthenticated).toBe(false)
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
       expect(store.error).toBeNull()
     })
 
@@ -76,7 +77,7 @@ describe('auth store', () => {
 
       await expect(store.fetchMe()).resolves.toBe(false)
       expect(store.isAuthenticated).toBe(false)
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
     })
   })
 
@@ -196,7 +197,7 @@ describe('auth store', () => {
       store.expire()
 
       expect(store.error).toBeNull()
-      expect(store.status).toBe('idle')
+      expect(store.status).toBe(AuthStatus.Idle)
     })
   })
 
