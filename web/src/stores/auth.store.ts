@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { User } from '@/types/user'
+import { AuthStatus } from '@/types/auth'
 import {
   AuthError,
   authSource,
@@ -10,13 +11,6 @@ import {
   type UpdateProfileInput
 } from '@/services/auth.service'
 import { AUTH_ERROR_BY_CODE, AUTH_TOAST, PROFILE_TOAST } from '@/services/toast-message.service'
-
-/**
- * `checking` — the boot-time `fetchMe()` is in flight
- * `busy`     — a signup/login/logout/update the user is waiting on
- * `ready`    — auth state is settled, signed in or not
- */
-export type AuthStatus = 'idle' | 'checking' | 'busy' | 'ready'
 
 /**
  * Widened for lookup. The copy itself lives in `toast-message.service.ts` as an
@@ -46,11 +40,13 @@ export const useAuthStore = defineStore('auth', () => {
   const source = ref<AuthSource>(authSource)
 
   const user = ref<User | null>(null)
-  const status = ref<AuthStatus>('idle')
+  const status = ref<AuthStatus>(AuthStatus.Idle)
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => user.value !== null)
-  const isBusy = computed(() => status.value === 'checking' || status.value === 'busy')
+  const isBusy = computed(
+    () => status.value === AuthStatus.Checking || status.value === AuthStatus.Busy
+  )
 
   function setSource(next: AuthSource) {
     source.value = next
@@ -59,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
   /** Records why the call failed and returns the `false` the caller reports on. */
   function fail(err: unknown, fallback: string, overrides?: Record<string, string>): false {
     error.value = toUserMessage(err, fallback, overrides)
-    status.value = 'ready'
+    status.value = AuthStatus.Ready
     return false
   }
 
@@ -73,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value) return
 
     user.value = null
-    status.value = 'ready'
+    status.value = AuthStatus.Ready
     error.value = AUTH_ERROR_BY_CODE.UNAUTHENTICATED
   }
 
@@ -83,29 +79,29 @@ export const useAuthStore = defineStore('auth', () => {
    * router can send them to `/login`. Only a broken connection is worth reporting.
    */
   async function fetchMe(): Promise<boolean> {
-    status.value = 'checking'
+    status.value = AuthStatus.Checking
     error.value = null
 
     try {
       user.value = await source.value.getCurrentUser()
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return isAuthenticated.value
     } catch (err) {
       user.value = null
       // Do not block the boot on this — the user lands on /login and can retry there.
       error.value = toUserMessage(err, AUTH_TOAST.checkFailed)
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return false
     }
   }
 
   async function signup(input: SignupInput): Promise<boolean> {
-    status.value = 'busy'
+    status.value = AuthStatus.Busy
     error.value = null
 
     try {
       user.value = await source.value.signup(input)
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return true
     } catch (err) {
       return fail(err, AUTH_TOAST.signupFailed)
@@ -113,12 +109,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(input: LoginInput): Promise<boolean> {
-    status.value = 'busy'
+    status.value = AuthStatus.Busy
     error.value = null
 
     try {
       user.value = await source.value.login(input)
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return true
     } catch (err) {
       return fail(err, AUTH_TOAST.signinFailed)
@@ -131,13 +127,13 @@ export const useAuthStore = defineStore('auth', () => {
    * outcome, and the cookies are short-lived anyway.
    */
   async function logout(): Promise<boolean> {
-    status.value = 'busy'
+    status.value = AuthStatus.Busy
     error.value = null
 
     try {
       await source.value.logout()
       user.value = null
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return true
     } catch (err) {
       user.value = null
@@ -146,12 +142,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function updateProfile(input: UpdateProfileInput): Promise<boolean> {
-    status.value = 'busy'
+    status.value = AuthStatus.Busy
     error.value = null
 
     try {
       user.value = await source.value.updateProfile(input)
-      status.value = 'ready'
+      status.value = AuthStatus.Ready
       return true
     } catch (err) {
       // Here a 401 means the current password was wrong, not that the session died.
