@@ -4,6 +4,7 @@ import { logger } from '../utils/logger.js'
 import { ACCESS_TOKEN_COOKIE } from '../utils/auth-cookie.js'
 import type { AuthContext } from '../services/auth.service.js'
 import type { AccessTokenPayload, TokenService } from '../services/auth/token.service.js'
+import { AuthErrorCode } from '../types/auth.js'
 
 export interface RequestUser {
   id: string
@@ -45,7 +46,9 @@ export function createRequireAuth(tokens: TokenService, sessions: SessionVerifie
 
     if (!token) {
       logger.warn('Rejected an unauthenticated request', { requestId: req.requestId, operation })
-      next(AppError.unauthenticated('UNAUTHENTICATED', 'You must be signed in to do that.'))
+      next(
+        AppError.unauthenticated(AuthErrorCode.Unauthenticated, 'You must be signed in to do that.')
+      )
       return
     }
 
@@ -82,7 +85,10 @@ export function createRequireAuth(tokens: TokenService, sessions: SessionVerifie
  */
 export function getAuth(req: Request): AuthContext {
   if (!req.user || !req.org) {
-    throw AppError.unauthenticated('UNAUTHENTICATED', 'You must be signed in to do that.')
+    throw AppError.unauthenticated(
+      AuthErrorCode.Unauthenticated,
+      'You must be signed in to do that.'
+    )
   }
   return { userId: req.user.id, org: req.org, sessionId: req.user.sessionId }
 }

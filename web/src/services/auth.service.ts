@@ -1,6 +1,7 @@
 import type { User } from '@/types/user'
 import { env } from '@/config/env'
 import { API_TOAST } from '@/services/toast-message.service'
+import { AuthErrorCode } from '@/types/auth'
 
 /**
  * Auth calls are cheap round-trips (no LLM behind them), so they fail faster than
@@ -77,7 +78,7 @@ async function send(url: string, init?: RequestInit): Promise<Response> {
   try {
     return await fetch(url, { ...init, credentials: 'include', signal: controller.signal })
   } catch {
-    throw new AuthError('NETWORK_ERROR', API_TOAST.networkUnreachable)
+    throw new AuthError(AuthErrorCode.NetworkError, API_TOAST.networkUnreachable)
   } finally {
     clearTimeout(timeout)
   }
@@ -86,7 +87,7 @@ async function send(url: string, init?: RequestInit): Promise<Response> {
 async function toError(response: Response): Promise<AuthError> {
   const body = (await response.json().catch(() => null)) as ApiErrorBody | null
   return new AuthError(
-    body?.error?.code ?? 'UNKNOWN_ERROR',
+    body?.error?.code ?? AuthErrorCode.UnknownError,
     body?.error?.message ?? API_TOAST.requestRejected
   )
 }
@@ -140,7 +141,7 @@ export function createHttpAuthSource(baseUrl: string): AuthSource {
     if (response.ok) return ((await response.json()) as UserEnvelope).user
 
     const error = await toError(response)
-    if (error.code !== 'UNAUTHENTICATED') throw error
+    if (error.code !== AuthErrorCode.Unauthenticated) throw error
 
     if (!(await refreshSession(baseUrl))) throw error
 
@@ -167,7 +168,7 @@ export function createHttpAuthSource(baseUrl: string): AuthSource {
         return await requestGuarded({ method: 'GET' })
       } catch (err) {
         // Signed out is the normal answer here, not a failure worth surfacing.
-        if (err instanceof AuthError && err.code === 'UNAUTHENTICATED') return null
+        if (err instanceof AuthError && err.code === AuthErrorCode.Unauthenticated) return null
         throw err
       }
     },
