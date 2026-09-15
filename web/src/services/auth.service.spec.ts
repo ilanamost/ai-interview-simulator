@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthError, createHttpAuthSource } from './auth.service'
+import { AuthErrorCode } from '@/types/auth'
 import { makeUser } from '@/test/auth-fixture'
 
 const BASE_URL = 'http://localhost:3001'
@@ -68,7 +69,11 @@ describe('createHttpAuthSource', () => {
     const [url, init] = fetchMock.mock.calls[0]
     expect(url).toBe(`${BASE_URL}/api/auth/signup`)
     expect(init.method).toBe('POST')
-    expect(JSON.parse(init.body)).toEqual({ email: 'a@b.co', name: 'A', password: 'hunter2hunter2' })
+    expect(JSON.parse(init.body)).toEqual({
+      email: 'a@b.co',
+      name: 'A',
+      password: 'hunter2hunter2'
+    })
   })
 
   it('posts no body on logout, because the API rejects any field there', async () => {
@@ -84,13 +89,15 @@ describe('createHttpAuthSource', () => {
 
   it('maps a non-2xx into an AuthError carrying the backend code and message', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(409, { error: { code: 'EMAIL_TAKEN', message: 'Email already in use.' } })
+      jsonResponse(409, {
+        error: { code: AuthErrorCode.EmailTaken, message: 'Email already in use.' }
+      })
     )
     const source = createHttpAuthSource(BASE_URL)
 
     await expect(
       source.signup({ email: 'a@b.co', name: 'A', password: 'hunter2hunter2' })
-    ).rejects.toMatchObject({ code: 'EMAIL_TAKEN', message: 'Email already in use.' })
+    ).rejects.toMatchObject({ code: AuthErrorCode.EmailTaken, message: 'Email already in use.' })
   })
 
   it('maps a network failure into a NETWORK_ERROR AuthError', async () => {
@@ -99,14 +106,16 @@ describe('createHttpAuthSource', () => {
 
     await expect(source.login({ email: 'a@b.co', password: 'x' })).rejects.toBeInstanceOf(AuthError)
     await expect(source.login({ email: 'a@b.co', password: 'x' })).rejects.toMatchObject({
-      code: 'NETWORK_ERROR'
+      code: AuthErrorCode.NetworkError
     })
   })
 
   describe('getCurrentUser', () => {
     it('returns null when nobody is signed in', async () => {
       fetchMock.mockResolvedValue(
-        jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Not signed in.' } })
+        jsonResponse(401, {
+          error: { code: AuthErrorCode.Unauthenticated, message: 'Not signed in.' }
+        })
       )
       const source = createHttpAuthSource(BASE_URL)
 
@@ -117,7 +126,7 @@ describe('createHttpAuthSource', () => {
       const user = makeUser()
       fetchMock
         .mockResolvedValueOnce(
-          jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Expired.' } })
+          jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Expired.' } })
         )
         .mockResolvedValueOnce(jsonResponse(200, { user }))
         .mockResolvedValueOnce(jsonResponse(200, { user }))
@@ -131,10 +140,10 @@ describe('createHttpAuthSource', () => {
     it('gives up as signed out when the refresh is also rejected', async () => {
       fetchMock
         .mockResolvedValueOnce(
-          jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Expired.' } })
+          jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Expired.' } })
         )
         .mockResolvedValueOnce(
-          jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Revoked.' } })
+          jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Revoked.' } })
         )
       const source = createHttpAuthSource(BASE_URL)
 
@@ -160,14 +169,17 @@ describe('createHttpAuthSource', () => {
     it('does not treat a wrong current password as an expired session', async () => {
       fetchMock.mockResolvedValue(
         jsonResponse(401, {
-          error: { code: 'INVALID_CREDENTIALS', message: 'Current password is incorrect.' }
+          error: {
+            code: AuthErrorCode.InvalidCredentials,
+            message: 'Current password is incorrect.'
+          }
         })
       )
       const source = createHttpAuthSource(BASE_URL)
 
       await expect(
         source.updateProfile({ password: 'newpassword', currentPassword: 'wrong' })
-      ).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' })
+      ).rejects.toMatchObject({ code: AuthErrorCode.InvalidCredentials })
       // No refresh attempt: a 401 here is about the password, not the cookie.
       expect(fetchMock.mock.calls.length).toBe(1)
     })

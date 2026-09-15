@@ -7,6 +7,7 @@ import {
   createInMemoryUserRepository
 } from '../test/in-memory-auth-repositories.js'
 import { AppError } from '../utils/app-error.js'
+import { AuthErrorCode } from '../types/auth.js'
 
 const ORG = 'default'
 
@@ -94,7 +95,7 @@ describe('auth.service signup', () => {
     const { service, userRepository } = build()
     await service.signup(CREDENTIALS)
 
-    await expectAppError(service.signup(CREDENTIALS), 409, 'EMAIL_TAKEN')
+    await expectAppError(service.signup(CREDENTIALS), 409, AuthErrorCode.EmailTaken)
     expect(userRepository.rows).toHaveLength(1)
   })
 
@@ -135,7 +136,7 @@ describe('auth.service login', () => {
     await expectAppError(
       service.login({ email: CREDENTIALS.email, password: 'nope' }),
       401,
-      'INVALID_CREDENTIALS'
+      AuthErrorCode.InvalidCredentials
     )
   })
 
@@ -162,7 +163,7 @@ describe('auth.service login', () => {
     await expectAppError(
       service.login({ email: CREDENTIALS.email, password: CREDENTIALS.password }),
       401,
-      'INVALID_CREDENTIALS'
+      AuthErrorCode.InvalidCredentials
     )
   })
 })
@@ -184,13 +185,13 @@ describe('auth.service refresh', () => {
     const first = await service.signup(CREDENTIALS)
     await service.refresh(first.refreshToken)
 
-    await expectAppError(service.refresh(first.refreshToken), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.refresh(first.refreshToken), 401, AuthErrorCode.Unauthenticated)
   })
 
   it('rejects a missing token', async () => {
     const { service } = build()
 
-    await expectAppError(service.refresh(undefined), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.refresh(undefined), 401, AuthErrorCode.Unauthenticated)
   })
 
   it('rejects a token whose session row has expired', async () => {
@@ -198,7 +199,7 @@ describe('auth.service refresh', () => {
     const first = await service.signup(CREDENTIALS)
     sessionRepository.rows[0].expiresAt = new Date(Date.now() - 1)
 
-    await expectAppError(service.refresh(first.refreshToken), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.refresh(first.refreshToken), 401, AuthErrorCode.Unauthenticated)
   })
 
   it('rejects a valid signature whose stored hash no longer matches', async () => {
@@ -206,7 +207,7 @@ describe('auth.service refresh', () => {
     const first = await service.signup(CREDENTIALS)
     sessionRepository.rows[0].refreshTokenHash = 'a-different-hash'
 
-    await expectAppError(service.refresh(first.refreshToken), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.refresh(first.refreshToken), 401, AuthErrorCode.Unauthenticated)
   })
 
   it('rejects a token minted for a different org', async () => {
@@ -214,7 +215,7 @@ describe('auth.service refresh', () => {
     const { service } = build({ org: 'org-b' })
     const foreign = tokens.signRefreshToken({ userId: 'u1', org: 'org-a', sessionId: 's1' })
 
-    await expectAppError(service.refresh(foreign), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.refresh(foreign), 401, AuthErrorCode.Unauthenticated)
   })
 })
 
@@ -276,7 +277,7 @@ describe('auth.service profile', () => {
     const { service, ctx, userRepository } = await signedIn()
     userRepository.rows.length = 0
 
-    await expectAppError(service.getCurrentUser(ctx), 401, 'UNAUTHENTICATED')
+    await expectAppError(service.getCurrentUser(ctx), 401, AuthErrorCode.Unauthenticated)
   })
 
   it('updates name and avatar', async () => {
@@ -306,7 +307,7 @@ describe('auth.service profile', () => {
     await expectAppError(
       service.updateProfile(ctx, { email: 'grace@example.com' }),
       409,
-      'EMAIL_TAKEN'
+      AuthErrorCode.EmailTaken
     )
   })
 
@@ -316,7 +317,7 @@ describe('auth.service profile', () => {
     await expectAppError(
       service.updateProfile(ctx, { password: 'a-fresh-password', currentPassword: 'wrong' }),
       401,
-      'INVALID_CREDENTIALS'
+      AuthErrorCode.InvalidCredentials
     )
   })
 
@@ -362,7 +363,7 @@ describe('auth.service profile', () => {
     await expectAppError(
       service.updateProfile({ ...ctx, org: 'other-org' }, { name: 'Ada L.' }),
       401,
-      'UNAUTHENTICATED'
+      AuthErrorCode.Unauthenticated
     )
   })
 })

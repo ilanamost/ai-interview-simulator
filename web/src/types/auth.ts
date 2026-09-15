@@ -8,3 +8,19 @@ export enum AuthStatus {
   /** Auth state is settled, signed in or not. */
   Ready = 'ready'
 }
+
+/**
+ * Machine-readable codes an `AuthError` can carry. `EmailTaken`, `InvalidCredentials`,
+ * `Unauthenticated`, and `ValidationError` mirror what the API's auth routes issue
+ * (api/src/types/auth.ts). `NetworkError` and `UnknownError` never come from the API —
+ * the transport in `auth.service.ts` invents them for a failed fetch and an
+ * unparseable error body, respectively.
+ */
+export enum AuthErrorCode {
+  EmailTaken = 'EMAIL_TAKEN',
+  InvalidCredentials = 'INVALID_CREDENTIALS',
+  Unauthenticated = 'UNAUTHENTICATED',
+  ValidationError = 'VALIDATION_ERROR',
+  NetworkError = 'NETWORK_ERROR',
+  UnknownError = 'UNKNOWN_ERROR'
+}

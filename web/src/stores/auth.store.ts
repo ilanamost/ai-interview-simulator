@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { User } from '@/types/user'
-import { AuthStatus } from '@/types/auth'
+import { AuthErrorCode, AuthStatus } from '@/types/auth'
 import {
   AuthError,
   authSource,
@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     user.value = null
     status.value = AuthStatus.Ready
-    error.value = AUTH_ERROR_BY_CODE.UNAUTHENTICATED
+    error.value = AUTH_ERROR_BY_CODE[AuthErrorCode.Unauthenticated]
   }
 
   /**
@@ -152,7 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       // Here a 401 means the current password was wrong, not that the session died.
       return fail(err, PROFILE_TOAST.saveFailed, {
-        INVALID_CREDENTIALS: PROFILE_TOAST.currentPasswordWrong
+        [AuthErrorCode.InvalidCredentials]: PROFILE_TOAST.currentPasswordWrong
       })
     }
   }
