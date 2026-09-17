@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { ORG, buildHarness, makeInterviewService, signUp } from '../test/app-harness.js'
 import type { InterviewService } from '../services/interview.service.js'
 import type { InterviewSummary } from '../types/interview.js'
+import { ErrorCode } from '../types/error.js'
 
 /*
  * QA adversarial pass on GET /api/interview (plan 013).
@@ -43,7 +44,7 @@ describe('GET /api/interview cannot be steered off its own org', () => {
     const res = await agent.get('/api/interview?org=org-b')
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
     expect(service.listInterviews).not.toHaveBeenCalled()
   })
 
@@ -98,7 +99,7 @@ describe('GET /api/interview cannot be steered off its own org', () => {
       const res = await agent.get(`/api/interview?${query}`)
 
       expect(res.status).toBe(400)
-      expect(res.body.error.code).toBe('VALIDATION_ERROR')
+      expect(res.body.error.code).toBe(ErrorCode.Validation)
     }
     expect(service.listInterviews).not.toHaveBeenCalled()
   })
@@ -132,7 +133,7 @@ describe('the query parser cannot smuggle a non-string past validateQuery', () =
     const res = await agent.get(`/api/interview?${query}`)
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
     expect(service.listInterviews).not.toHaveBeenCalled()
   })
 
@@ -259,7 +260,7 @@ describe('the page window cannot be pushed out of range', () => {
     const res = await agent.get(`/api/interview?${query}`)
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
     expect(service.listInterviews).not.toHaveBeenCalled()
   })
 

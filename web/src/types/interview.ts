@@ -22,6 +22,29 @@ export const DEFAULT_LLM_MODEL: LlmModel = 'claude-sonnet-5'
 /** A grade is a whole number from 0 to 100. */
 export type Grade = number
 
+/**
+ * Machine-readable codes an `InterviewError` can carry. `NotFound`, `EmptyAnswer`,
+ * `NoEvaluation`, `Conflict`, `Internal`, and `Validation` mirror what the API's
+ * interview routes issue (api/src/types/error.ts). `BankEmpty` and `InvalidCount`
+ * never come from the API — the mock source (interview.service.ts) invents them for
+ * setup failures it alone can hit. `NetworkError` and `UnknownError` never come from
+ * the API either — the HTTP transport (interview-http.service.ts) invents them for a
+ * failed fetch and an unparseable error body, respectively. A signed-out session uses
+ * `AuthErrorCode.Unauthenticated` (@/types/auth) instead of a code of its own here.
+ */
+export enum InterviewErrorCode {
+  NotFound = 'NOT_FOUND',
+  EmptyAnswer = 'EMPTY_ANSWER',
+  NoEvaluation = 'NO_EVALUATION',
+  Conflict = 'CONFLICT',
+  Internal = 'INTERNAL_ERROR',
+  Validation = 'VALIDATION_ERROR',
+  BankEmpty = 'BANK_EMPTY',
+  InvalidCount = 'INVALID_COUNT',
+  NetworkError = 'NETWORK_ERROR',
+  UnknownError = 'UNKNOWN_ERROR'
+}
+
 export interface InterviewConfig {
   jobTitle: JobTitle
   level: ExperienceLevel

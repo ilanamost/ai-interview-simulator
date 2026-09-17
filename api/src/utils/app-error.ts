@@ -1,3 +1,5 @@
+import { ErrorCode } from '../types/error.js'
+
 /**
  * Stable error shape per .rule/error-handling-rules.md: every non-2xx response
  * carries a machine-readable code and a user-safe message. Internal detail
@@ -15,7 +17,7 @@ export class AppError extends Error {
   }
 
   static validation(message: string, details?: unknown): AppError {
-    return new AppError(400, 'VALIDATION_ERROR', message, details)
+    return new AppError(400, ErrorCode.Validation, message, details)
   }
 
   /**
@@ -28,11 +30,11 @@ export class AppError extends Error {
   }
 
   static notFound(message: string): AppError {
-    return new AppError(404, 'NOT_FOUND', message)
+    return new AppError(404, ErrorCode.NotFound, message)
   }
 
   /** 409 — state conflict. `code` narrows it, e.g. `EMAIL_TAKEN` on signup. */
-  static conflict(message: string, code = 'CONFLICT'): AppError {
+  static conflict(message: string, code: string = ErrorCode.Conflict): AppError {
     return new AppError(409, code, message)
   }
 
@@ -41,6 +43,6 @@ export class AppError extends Error {
   }
 
   static upstreamUnavailable(message: string): AppError {
-    return new AppError(502, 'UPSTREAM_UNAVAILABLE', message)
+    return new AppError(502, ErrorCode.UpstreamUnavailable, message)
   }
 }

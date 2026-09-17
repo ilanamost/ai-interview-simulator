@@ -1,4 +1,6 @@
 import type { Evaluation, InterviewSession, Question, Report } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { InterviewError, type InterviewSource } from './interview.service'
 import { refreshSession } from './auth.service'
 
@@ -19,7 +21,7 @@ async function send(url: string, init?: RequestInit): Promise<Response> {
     return await fetch(url, { ...init, credentials: 'include', signal: controller.signal })
   } catch {
     throw new InterviewError(
-      'NETWORK_ERROR',
+      InterviewErrorCode.NetworkError,
       'Could not reach the interview service. Check your connection and try again.'
     )
   } finally {
@@ -30,7 +32,7 @@ async function send(url: string, init?: RequestInit): Promise<Response> {
 async function toError(response: Response): Promise<InterviewError> {
   const body = (await response.json().catch(() => null)) as ApiErrorBody | null
   return new InterviewError(
-    body?.error?.code ?? 'UNKNOWN_ERROR',
+    body?.error?.code ?? InterviewErrorCode.UnknownError,
     body?.error?.message ?? 'Something failed while running the interview. Please try again.'
   )
 }
@@ -59,7 +61,7 @@ export async function request<T>(baseUrl: string, path: string, init?: RequestIn
 
   if (response.status === 401) {
     const error = await toError(response)
-    if (error.code !== 'UNAUTHENTICATED') throw error
+    if (error.code !== AuthErrorCode.Unauthenticated) throw error
     if (!(await refreshSession(baseUrl))) throw error
 
     response = await send(url, init)
@@ -90,7 +92,7 @@ export async function fetchInterviewSession(
   try {
     return await request<InterviewSession>(baseUrl, `/api/interview/${id}`)
   } catch (err) {
-    if (err instanceof InterviewError && err.code === 'NOT_FOUND') return null
+    if (err instanceof InterviewError && err.code === InterviewErrorCode.NotFound) return null
     throw err
   }
 }

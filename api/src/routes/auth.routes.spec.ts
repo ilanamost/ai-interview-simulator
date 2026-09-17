@@ -12,6 +12,7 @@ import {
   signUp
 } from '../test/app-harness.js'
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../utils/auth-cookie.js'
+import { ErrorCode } from '../types/error.js'
 
 describe('POST /api/auth/signup', () => {
   it('creates the account, returns the public user, and sets both auth cookies', async () => {
@@ -95,7 +96,7 @@ describe('POST /api/auth/signup', () => {
     const { res } = await signUp(app, { email: 'not-an-email' })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
   })
 
   it('rejects a password shorter than the minimum with a 400', async () => {
@@ -104,7 +105,7 @@ describe('POST /api/auth/signup', () => {
     const { res } = await signUp(app, { password: 'short' })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
   })
 
   it('rejects unexpected fields in the body', async () => {

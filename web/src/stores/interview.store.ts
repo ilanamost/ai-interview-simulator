@@ -8,6 +8,7 @@ import type {
   Question,
   Report
 } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { InterviewError, interviewSource, type InterviewSource } from '@/services/interview.service'
 import { fetchInterviewSession } from '@/services/interview-http.service'
 import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/services/session-storage.service'
@@ -38,7 +39,7 @@ function toUserMessage(err: unknown): string {
  * signing back in resumes where they were.
  */
 function signOutIfSessionExpired(err: unknown) {
-  if (err instanceof InterviewError && err.code === 'UNAUTHENTICATED') useAuthStore().expire()
+  if (err instanceof InterviewError && err.code === AuthErrorCode.Unauthenticated) useAuthStore().expire()
 }
 
 /**

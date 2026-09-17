@@ -10,6 +10,8 @@ import type {
   ReportHistorySource
 } from '@/services/report-history.service'
 import type { InterviewSummary } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 
 /*
  * QA re-verification of the request-sequencing fix in report-history.store.ts.
@@ -126,7 +128,7 @@ describe('overlapping list reads settle on the one the user actually asked for l
 
     listCalls[1].resolve([makeSummary('backend-row')])
     await current
-    listCalls[0].reject(new InterviewError('INTERNAL_ERROR', 'Too late.'))
+    listCalls[0].reject(new InterviewError(InterviewErrorCode.Internal, 'Too late.'))
 
     // Resolves rather than rejecting, so the view has nothing to toast.
     await expect(abandoned).resolves.toBeUndefined()
@@ -142,7 +144,7 @@ describe('overlapping list reads settle on the one the user actually asked for l
     store.setSource(source)
 
     const only = store.fetchList({ jobTitle: 'frontend' })
-    listCalls[0].reject(new InterviewError('INTERNAL_ERROR', 'Could not load.'))
+    listCalls[0].reject(new InterviewError(InterviewErrorCode.Internal, 'Could not load.'))
 
     // The guard must not have swallowed real failures along with stale ones.
     await expect(only).rejects.toBeInstanceOf(InterviewError)
@@ -163,7 +165,7 @@ describe('overlapping list reads settle on the one the user actually asked for l
 
     listCalls[1].resolve([makeSummary('backend-row')])
     await current
-    listCalls[0].reject(new InterviewError('UNAUTHENTICATED', 'Signed out.'))
+    listCalls[0].reject(new InterviewError(AuthErrorCode.Unauthenticated, 'Signed out.'))
     await abandoned
 
     // The current read succeeded, so the session demonstrably is alive: trusting the
@@ -179,7 +181,7 @@ describe('overlapping list reads settle on the one the user actually asked for l
     store.setSource(source)
 
     const current = store.fetchList()
-    listCalls[0].reject(new InterviewError('UNAUTHENTICATED', 'Signed out.'))
+    listCalls[0].reject(new InterviewError(AuthErrorCode.Unauthenticated, 'Signed out.'))
 
     await expect(current).rejects.toBeInstanceOf(InterviewError)
     expect(auth.isAuthenticated).toBe(false)
@@ -280,7 +282,7 @@ describe('reset while a read is in flight', () => {
 
     const inFlight = store.fetchList()
     store.reset()
-    listCalls[0].reject(new InterviewError('INTERNAL_ERROR', 'Boom.'))
+    listCalls[0].reject(new InterviewError(InterviewErrorCode.Internal, 'Boom.'))
 
     await expect(inFlight).resolves.toBeUndefined()
     expect(store.error).toBeNull()

@@ -12,6 +12,7 @@ import {
 import { InterviewError } from './interview.service'
 import type { ReportHistorySource } from './report-history.service'
 import type { InterviewConfig, InterviewSession, Report } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 
 const BASE_URL = 'http://localhost:3001'
 
@@ -569,7 +570,7 @@ describe('http report history source', () => {
 
   it('reads a NOT_FOUND detail as null, so the view can show a clear empty state', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(404, { error: { code: 'NOT_FOUND', message: 'No interview found.' } })
+      jsonResponse(404, { error: { code: InterviewErrorCode.NotFound, message: 'No interview found.' } })
     )
 
     await expect(createHttpReportHistorySource(BASE_URL).getDetail('gone')).resolves.toBeNull()
@@ -577,7 +578,9 @@ describe('http report history source', () => {
 
   it('reads an interview with nothing evaluated as null too', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(422, { error: { code: 'NO_EVALUATION', message: 'Nothing evaluated yet.' } })
+      jsonResponse(422, {
+        error: { code: InterviewErrorCode.NoEvaluation, message: 'Nothing evaluated yet.' }
+      })
     )
 
     await expect(createHttpReportHistorySource(BASE_URL).getDetail('empty')).resolves.toBeNull()
@@ -585,7 +588,7 @@ describe('http report history source', () => {
 
   it('surfaces a real failure rather than pretending the report is missing', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(500, { error: { code: 'INTERNAL_ERROR', message: 'Boom.' } })
+      jsonResponse(500, { error: { code: InterviewErrorCode.Internal, message: 'Boom.' } })
     )
 
     await expect(createHttpReportHistorySource(BASE_URL).getDetail('x')).rejects.toBeInstanceOf(
@@ -595,11 +598,11 @@ describe('http report history source', () => {
 
   it('maps a failed list into an InterviewError carrying the backend code', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'Bad date.' } })
+      jsonResponse(400, { error: { code: InterviewErrorCode.Validation, message: 'Bad date.' } })
     )
 
     await expect(createHttpReportHistorySource(BASE_URL).list({ date: 'nope' })).rejects.toMatchObject(
-      { code: 'VALIDATION_ERROR', message: 'Bad date.' }
+      { code: InterviewErrorCode.Validation, message: 'Bad date.' }
     )
   })
 
