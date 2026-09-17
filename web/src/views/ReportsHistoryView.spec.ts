@@ -9,6 +9,7 @@ import { PAGE_SIZE, useReportHistoryStore } from '@/stores/report-history.store'
 import { InterviewError } from '@/services/interview.service'
 import type { ReportHistoryQuery, ReportHistorySource } from '@/services/report-history.service'
 import type { InterviewSummary } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 import { signIn } from '@/test/auth-fixture'
 
 vi.mock('vue-sonner', async () => {
@@ -556,7 +557,7 @@ describe('ReportsHistoryView', () => {
 
   it('toasts the failure instead of rendering a half-loaded list', async () => {
     const { wrapper } = await mountView({
-      failWith: new InterviewError('INTERNAL_ERROR', 'Could not load your reports.')
+      failWith: new InterviewError(InterviewErrorCode.Internal, 'Could not load your reports.')
     })
 
     expect(toast.error).toHaveBeenCalledWith('Could not load your reports.')

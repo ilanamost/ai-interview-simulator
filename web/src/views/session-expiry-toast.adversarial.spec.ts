@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useInterviewStore } from '@/stores/interview.store'
 import { InterviewError, type InterviewSource } from '@/services/interview.service'
 import type { Evaluation, InterviewSession, Question, Report } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { signIn } from '@/test/auth-fixture'
 import { stubMatchMedia } from '@/test/theme-fixture'
 
@@ -36,7 +37,7 @@ beforeEach(() => {
  * toast stacking on the view's).
  */
 
-const EXPIRED = () => new InterviewError('UNAUTHENTICATED', 'You must be signed in to do that.')
+const EXPIRED = () => new InterviewError(AuthErrorCode.Unauthenticated, 'You must be signed in to do that.')
 
 const CONFIG = { jobTitle: 'frontend', level: 'mid', type: 'technical', questionCount: 2 } as const
 

@@ -5,6 +5,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import { createHttpInterviewSource } from '@/services/interview-http.service'
 import { signIn } from '@/test/auth-fixture'
 import type { InterviewConfig } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 
 vi.mock('vue-sonner', async () => {
   const actual = await vi.importActual<typeof import('vue-sonner')>('vue-sonner')
@@ -39,7 +41,7 @@ function jsonResponse(status: number, body: unknown): Response {
 /** Exactly what `require-auth` puts on the wire when the access token is gone. */
 function unauthenticated(): Response {
   return jsonResponse(401, {
-    error: { code: 'UNAUTHENTICATED', message: 'You must be signed in to do that.' },
+    error: { code: AuthErrorCode.Unauthenticated, message: 'You must be signed in to do that.' },
     requestId: 'req-1'
   })
 }
@@ -130,7 +132,7 @@ describe('a real 401 reaching interview.store through the real HTTP source', () 
     fetchMock.mockResolvedValue(unauthenticated())
 
     await expect(store.submitAnswer('my answer')).rejects.toMatchObject({
-      code: 'UNAUTHENTICATED'
+      code: AuthErrorCode.Unauthenticated
     })
 
     // The exact failure from the first pass: signed out server-side, still "signed
@@ -169,7 +171,7 @@ describe('a real 401 reaching interview.store through the real HTTP source', () 
     const auth = useAuthStore()
 
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(422, { error: { code: 'EMPTY_ANSWER', message: 'Answer is empty.' } })
+      jsonResponse(422, { error: { code: InterviewErrorCode.EmptyAnswer, message: 'Answer is empty.' } })
     )
 
     await store.submitAnswer('my answer').catch(() => undefined)

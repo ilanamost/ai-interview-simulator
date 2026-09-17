@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { PASSWORD, agentFor, buildHarness, cookieValue, signUp } from '../test/app-harness.js'
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../utils/auth-cookie.js'
+import { ErrorCode } from '../types/error.js'
 
 /**
  * QA adversarial pass for plan 007. These tests do not re-run what the backend agent
@@ -214,7 +215,7 @@ describe('long and malformed input', () => {
       .send({ email: `${'a'.repeat(300)}@example.com`, name: 'Ada', password: PASSWORD })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
   })
 
   it('rejects an over-length name without a 500', async () => {

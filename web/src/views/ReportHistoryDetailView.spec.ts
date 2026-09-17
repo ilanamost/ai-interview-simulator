@@ -10,6 +10,7 @@ import { downloadReportPdf } from '@/services/report-pdf.service'
 import { InterviewError } from '@/services/interview.service'
 import type { ReportHistoryDetail, ReportHistorySource } from '@/services/report-history.service'
 import type { InterviewSession, Report } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 import { signIn } from '@/test/auth-fixture'
 
 vi.mock('@/services/report-pdf.service', () => ({ downloadReportPdf: vi.fn() }))
@@ -193,7 +194,7 @@ describe('ReportHistoryDetailView', () => {
 
   it('toasts a real load failure and still shows a way back', async () => {
     const { wrapper } = await mountView({
-      failWith: new InterviewError('INTERNAL_ERROR', 'Could not load that report.')
+      failWith: new InterviewError(InterviewErrorCode.Internal, 'Could not load that report.')
     })
 
     expect(toast.error).toHaveBeenCalledWith('Could not load that report.')

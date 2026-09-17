@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHttpInterviewSource } from './interview-http.service'
 import { InterviewError } from './interview.service'
 import type { Answer, InterviewConfig, InterviewSession, Question } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 
 const BASE_URL = 'http://localhost:3001'
 
@@ -121,12 +123,12 @@ describe('createHttpInterviewSource', () => {
 
   it('maps a non-2xx response into an InterviewError carrying the backend code and message', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(404, { error: { code: 'NOT_FOUND', message: 'No interview found.' } })
+      jsonResponse(404, { error: { code: InterviewErrorCode.NotFound, message: 'No interview found.' } })
     )
     const source = createHttpInterviewSource(BASE_URL)
 
     await expect(source.getReport(makeSession())).rejects.toMatchObject({
-      code: 'NOT_FOUND',
+      code: InterviewErrorCode.NotFound,
       message: 'No interview found.'
     })
     await expect(source.getReport(makeSession())).rejects.toBeInstanceOf(InterviewError)
@@ -137,7 +139,7 @@ describe('createHttpInterviewSource', () => {
     const source = createHttpInterviewSource(BASE_URL)
 
     await expect(source.getReport(makeSession())).rejects.toMatchObject({
-      code: 'NETWORK_ERROR'
+      code: InterviewErrorCode.NetworkError
     })
   })
 
@@ -149,7 +151,7 @@ describe('createHttpInterviewSource', () => {
   describe('an access token that expired mid-interview', () => {
     const expired = () =>
       jsonResponse(401, {
-        error: { code: 'UNAUTHENTICATED', message: 'You must be signed in to do that.' }
+        error: { code: AuthErrorCode.Unauthenticated, message: 'You must be signed in to do that.' }
       })
 
     it('rotates the session and replays the answer, so the user never notices', async () => {
@@ -209,7 +211,7 @@ describe('createHttpInterviewSource', () => {
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'UNAUTHENTICATED'
+        code: AuthErrorCode.Unauthenticated
       })
       // The original call, one refresh, and nothing more — no retry loop.
       expect(fetchMock.mock.calls.length).toBe(2)
@@ -223,7 +225,7 @@ describe('createHttpInterviewSource', () => {
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'UNAUTHENTICATED'
+        code: AuthErrorCode.Unauthenticated
       })
       expect(fetchMock.mock.calls.length).toBe(3)
     })
@@ -231,24 +233,24 @@ describe('createHttpInterviewSource', () => {
     it('does not burn a refresh on a failure that has nothing to do with the session', async () => {
       // A 409 on an already-answered question is the server's real answer.
       fetchMock.mockResolvedValue(
-        jsonResponse(409, { error: { code: 'CONFLICT', message: 'Already answered.' } })
+        jsonResponse(409, { error: { code: InterviewErrorCode.Conflict, message: 'Already answered.' } })
       )
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(
         source.evaluateAnswer(makeSession(), makeQuestion(), makeAnswer())
-      ).rejects.toMatchObject({ code: 'CONFLICT' })
+      ).rejects.toMatchObject({ code: InterviewErrorCode.Conflict })
       expect(fetchMock.mock.calls.length).toBe(1)
     })
 
     it('treats a 401 that is not UNAUTHENTICATED as final', async () => {
       fetchMock.mockResolvedValue(
-        jsonResponse(401, { error: { code: 'INVALID_CREDENTIALS', message: 'Nope.' } })
+        jsonResponse(401, { error: { code: AuthErrorCode.InvalidCredentials, message: 'Nope.' } })
       )
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'INVALID_CREDENTIALS'
+        code: AuthErrorCode.InvalidCredentials
       })
       expect(fetchMock.mock.calls.length).toBe(1)
     })

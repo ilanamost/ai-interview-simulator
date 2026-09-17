@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { AppError } from '../utils/app-error.js'
+import { ErrorCode } from '../types/error.js'
 import type {
   InterviewRepository,
   ListInterviewQuery
@@ -155,7 +156,7 @@ export function createInterviewService(deps: InterviewServiceDeps) {
       text: string
     ): Promise<Evaluation> {
       if (!text.trim()) {
-        throw AppError.domain('EMPTY_ANSWER', 'Write an answer before submitting it.')
+        throw AppError.domain(ErrorCode.EmptyAnswer, 'Write an answer before submitting it.')
       }
 
       const session = await loadSessionOrThrow(interviewId, org)
@@ -202,7 +203,7 @@ export function createInterviewService(deps: InterviewServiceDeps) {
       const session = await loadSessionOrThrow(interviewId, org)
       if (session.evaluations.length === 0) {
         throw AppError.domain(
-          'NO_EVALUATION',
+          ErrorCode.NoEvaluation,
           'There are no answers to report on yet. Finish at least one question first.'
         )
       }

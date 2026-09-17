@@ -7,6 +7,7 @@ import type {
   Report,
   ReportEntry
 } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 import { env } from '@/config/env'
 import { evaluateAnswerText } from './answer-grader'
 import { createHttpInterviewSource } from './interview-http.service'
@@ -115,7 +116,7 @@ function planEntries(config: InterviewConfig): BankEntry[] {
   const bank = getBank(config.jobTitle, config.type)
   if (bank.length === 0) {
     throw new InterviewError(
-      'BANK_EMPTY',
+      InterviewErrorCode.BankEmpty,
       'No questions are available for that combination yet. Try a different interview type.'
     )
   }
@@ -154,7 +155,10 @@ export function createMockInterviewSource(): InterviewSource {
       await delay(LATENCY_MS)
 
       if (config.questionCount < 1) {
-        throw new InterviewError('INVALID_COUNT', 'An interview needs at least one question.')
+        throw new InterviewError(
+          InterviewErrorCode.InvalidCount,
+          'An interview needs at least one question.'
+        )
       }
 
       const plan = planEntries(config)
@@ -200,7 +204,7 @@ export function createMockInterviewSource(): InterviewSource {
       await delay(LATENCY_MS)
 
       if (!answer.text.trim()) {
-        throw new InterviewError('EMPTY_ANSWER', 'Write an answer before submitting it.')
+        throw new InterviewError(InterviewErrorCode.EmptyAnswer, 'Write an answer before submitting it.')
       }
 
       return evaluateAnswerText(question, answer.text, session.config.level)
@@ -211,7 +215,7 @@ export function createMockInterviewSource(): InterviewSource {
 
       if (session.evaluations.length === 0) {
         throw new InterviewError(
-          'NO_EVALUATION',
+          InterviewErrorCode.NoEvaluation,
           'There are no answers to report on yet. Finish at least one question first.'
         )
       }
