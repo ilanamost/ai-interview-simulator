@@ -5,8 +5,9 @@ import router from './router'
 import './styles/main.scss'
 import { useAuthStore } from './stores/auth.store'
 import { useInterviewStore } from './stores/interview.store'
+import { withStartupLoader } from './services/startup-loader.service'
 
-async function bootstrap() {
+async function bootstrapApp() {
   const app = createApp(App)
 
   app.use(createPinia())
@@ -24,4 +25,4 @@ async function bootstrap() {
   app.mount('#app')
 }
 
-bootstrap()
+void withStartupLoader(bootstrapApp)
