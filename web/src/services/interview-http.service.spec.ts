@@ -4,6 +4,8 @@ import { InterviewError } from './interview.service'
 import type { Answer, InterviewConfig, InterviewSession, Question } from '@/types/interview'
 import { InterviewErrorCode } from '@/types/interview'
 import { AuthErrorCode } from '@/types/auth'
+import { createPinia, setActivePinia } from 'pinia'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const BASE_URL = 'http://localhost:3001'
 
@@ -254,5 +256,76 @@ describe('createHttpInterviewSource', () => {
       })
       expect(fetchMock.mock.calls.length).toBe(1)
     })
+  })
+})
+
+/**
+ * Plan 023: every interview call drives the global API loader through `trackRequest`,
+ * and a failed or timed-out call must not leave it stuck on screen.
+ */
+describe('createHttpInterviewSource and the global API loader', () => {
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('shows the loader while a call is in flight and clears it once it answers', async () => {
+    let answer!: (response: Response) => void
+    fetchMock.mockReturnValue(new Promise<Response>(resolve => (answer = resolve)))
+    const loader = useLoaderStore()
+
+    const call = createHttpInterviewSource(BASE_URL).startInterview(makeConfig())
+    expect(loader.isLoading).toBe(true)
+
+    answer(jsonResponse(201, makeSession()))
+    await call
+    expect(loader.isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 4xx', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'Bad config' } })
+    )
+
+    await expect(createHttpInterviewSource(BASE_URL).startInterview(makeConfig())).rejects.toBeInstanceOf(
+      InterviewError
+    )
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 5xx', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(500, {}))
+
+    await expect(createHttpInterviewSource(BASE_URL).startInterview(makeConfig())).rejects.toBeInstanceOf(
+      InterviewError
+    )
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader when the call times out and is aborted', async () => {
+    vi.useFakeTimers()
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+        })
+    )
+    const loader = useLoaderStore()
+
+    const call = createHttpInterviewSource(BASE_URL).startInterview(makeConfig())
+    const settled = expect(call).rejects.toMatchObject({ code: InterviewErrorCode.NetworkError })
+    expect(loader.isLoading).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(30000)
+    await settled
+    expect(loader.isLoading).toBe(false)
   })
 })

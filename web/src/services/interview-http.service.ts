@@ -3,6 +3,7 @@ import { InterviewErrorCode } from '@/types/interview'
 import { AuthErrorCode } from '@/types/auth'
 import { InterviewError, type InterviewSource } from './interview.service'
 import { refreshSession } from './auth.service'
+import { trackRequest } from './loader.service'
 
 /** LLM-backed calls can run several seconds; fail loud rather than hang forever. */
 const TIMEOUT_MS = 30000
@@ -54,7 +55,14 @@ async function toError(response: Response): Promise<InterviewError> {
  * here and `report-history.service.ts` — shares one credentials/refresh/error-mapping
  * path rather than growing a second, subtly different copy of it.
  */
-export async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+export function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+  // The whole chain — first call, refresh, retry, body read — is one tracked unit, so the
+  // global loader stays up across the hops instead of dropping to zero and re-arming its
+  // grace delay between them.
+  return trackRequest(execute<T>(baseUrl, path, init))
+}
+
+async function execute<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
   const url = `${baseUrl}${path}`
 
   let response = await send(url, init)
