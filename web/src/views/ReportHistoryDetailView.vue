@@ -46,9 +46,8 @@ onMounted(async () => {
     </button>
   </section>
 
-  <p v-else-if="store.isBusy" class="text-muted">Loading that report…</p>
-
-  <section v-else class="empty-state stack">
+  <!-- While the read is in flight the global API loader covers this; render nothing. -->
+  <section v-else-if="!store.isBusy" class="empty-state stack">
     <p>That report could not be found. It may have been removed.</p>
     <p><RouterLink :to="{ name: 'reports' }">Back to history</RouterLink></p>
   </section>

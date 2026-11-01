@@ -320,13 +320,18 @@ describe('the detail screen before its read has settled', () => {
     expect(wrapper.text()).toContain('could not be found')
   })
 
-  it('replaces it with the loading state on the next tick, so no user sees it settle wrong', async () => {
-    const { wrapper } = mountDetail(async () => new Promise(() => {}))
+  /**
+   * Plan 023 moved the "loading" signal to the global API loader, so the in-flight
+   * screen renders nothing of its own — but it still must not claim "not found".
+   */
+  it('withdraws it on the next tick while the read is in flight, so no user sees it settle wrong', async () => {
+    const { wrapper, store } = mountDetail(async () => new Promise(() => {}))
 
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Loading that report')
+    expect(store.isBusy).toBe(true)
     expect(wrapper.text()).not.toContain('could not be found')
+    expect(wrapper.find('.empty-state').exists()).toBe(false)
   })
 
   it('still shows a stale report from a previous visit while the next one loads', async () => {

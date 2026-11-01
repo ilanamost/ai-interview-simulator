@@ -35,7 +35,9 @@
   animation: spin 700ms linear infinite;
 }
 
-.startup-loader {
+// The global API loader (`ApiLoader.vue`). Above every other layer, including the
+// encouragement modal, because a call in flight blocks whatever is under it.
+.api-loader {
   position: fixed;
   z-index: 1000;
   inset: 0;
@@ -43,16 +45,21 @@
   align-items: center;
   justify-content: center;
   gap: var(--sp-3);
-  background-color: var(--clr-bg);
+  background-color: color-mix(in srgb, var(--clr-bg) 75%, transparent);
   color: var(--clr-text);
   font-family: var(--font-body);
+  cursor: progress;
 }
 
-.startup-loader-spinner {
+.api-loader-spinner {
   width: 2rem;
   height: 2rem;
   border-width: 3px;
   color: var(--clr-accent);
+}
+
+.api-loader-label {
+  font-size: var(--fs-lg);
 }
 
 @keyframes spin {

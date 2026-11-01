@@ -263,6 +263,29 @@ describe('ReportsHistoryView', () => {
       expect(wrapper.get('.empty-state a').attributes('href')).toBe('/practice')
     })
 
+    /**
+     * Plan 023: the global API loader is the in-flight signal now, so the view renders
+     * no loading text of its own — and must not flash the empty state before the read
+     * has answered.
+     */
+    it('renders neither rows, an empty state, nor its own loading text while a read is in flight', async () => {
+      setActivePinia(createPinia())
+      signIn()
+      const store = useReportHistoryStore()
+      store.setSource({ list: () => new Promise(() => {}), getDetail: async () => null, record: vi.fn() })
+      const router = createAppRouter(createMemoryHistory())
+      router.push('/reports')
+      await router.isReady()
+
+      const wrapper = mount(ReportsHistoryView, { global: { plugins: [router] } })
+      await flushPromises()
+
+      expect(store.isBusy).toBe(true)
+      expect(wrapper.find('.history-list').exists()).toBe(false)
+      expect(wrapper.find('.empty-state').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('Loading')
+    })
+
     it('says the filters matched nothing rather than that there is no history', async () => {
       const { wrapper } = await mountView()
 

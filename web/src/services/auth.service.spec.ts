@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthError, createHttpAuthSource } from './auth.service'
 import { AuthErrorCode } from '@/types/auth'
 import { makeUser } from '@/test/auth-fixture'
+import { createPinia, setActivePinia } from 'pinia'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const BASE_URL = 'http://localhost:3001'
 
@@ -183,5 +185,76 @@ describe('createHttpAuthSource', () => {
       // No refresh attempt: a 401 here is about the password, not the cookie.
       expect(fetchMock.mock.calls.length).toBe(1)
     })
+  })
+})
+
+/**
+ * Plan 023: every auth call drives the global API loader through `trackRequest`, and
+ * a failed or timed-out call must not leave it stuck on screen.
+ */
+describe('createHttpAuthSource and the global API loader', () => {
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('shows the loader while a call is in flight and clears it once it answers', async () => {
+    let answer!: (response: Response) => void
+    fetchMock.mockReturnValue(new Promise<Response>(resolve => (answer = resolve)))
+    const loader = useLoaderStore()
+
+    const call = createHttpAuthSource(BASE_URL).login({ email: 'dev@example.com', password: 'pw' })
+    expect(loader.isLoading).toBe(true)
+
+    answer(jsonResponse(200, { user: makeUser() }))
+    await call
+    expect(loader.isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 4xx', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'Bad input' } })
+    )
+
+    await expect(
+      createHttpAuthSource(BASE_URL).login({ email: 'dev@example.com', password: 'pw' })
+    ).rejects.toBeInstanceOf(AuthError)
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 5xx', async () => {
+    fetchMock.mockResolvedValue(emptyResponse(503))
+
+    await expect(
+      createHttpAuthSource(BASE_URL).login({ email: 'dev@example.com', password: 'pw' })
+    ).rejects.toBeInstanceOf(AuthError)
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader when the call times out and is aborted', async () => {
+    vi.useFakeTimers()
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+        })
+    )
+    const loader = useLoaderStore()
+
+    const call = createHttpAuthSource(BASE_URL).login({ email: 'dev@example.com', password: 'pw' })
+    const settled = expect(call).rejects.toMatchObject({ code: AuthErrorCode.NetworkError })
+    expect(loader.isLoading).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(15000)
+    await settled
+    expect(loader.isLoading).toBe(false)
   })
 })

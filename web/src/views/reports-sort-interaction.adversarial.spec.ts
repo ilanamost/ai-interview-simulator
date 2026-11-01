@@ -109,8 +109,13 @@ function rowIds(wrapper: View): string[] {
   return wrapper.findAll('.history-row').map(row => (row.attributes('href') ?? '').replace('/reports/', ''))
 }
 
+/**
+ * Since plan 023 the in-flight state is the global API loader, and the list area
+ * renders neither rows nor the empty state while a read is pending — so "stuck
+ * loading" shows up here as that area left blank.
+ */
 function isLoadingVisible(wrapper: View): boolean {
-  return wrapper.text().includes('Loading your reports')
+  return !wrapper.find('.history-list').exists() && !wrapper.find('.empty-state').exists()
 }
 
 describe('hammering the sort control', () => {

@@ -2,6 +2,7 @@ import type { User } from '@/types/user'
 import { env } from '@/config/env'
 import { API_TOAST } from '@/services/toast-message.service'
 import { AuthErrorCode } from '@/types/auth'
+import { trackRequest } from '@/services/loader.service'
 
 /**
  * Auth calls are cheap round-trips (no LLM behind them), so they fail faster than
@@ -76,7 +77,9 @@ async function send(url: string, init?: RequestInit): Promise<Response> {
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
   try {
-    return await fetch(url, { ...init, credentials: 'include', signal: controller.signal })
+    return await trackRequest(
+      fetch(url, { ...init, credentials: 'include', signal: controller.signal })
+    )
   } catch {
     throw new AuthError(AuthErrorCode.NetworkError, API_TOAST.networkUnreachable)
   } finally {
