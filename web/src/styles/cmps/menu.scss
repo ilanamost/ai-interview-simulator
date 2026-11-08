@@ -1,3 +1,5 @@
+@use '../setup/variables' as *;
+
 /* Header identity block: avatar + settings dropdown. */
 .header-user {
   display: flex;
@@ -45,6 +47,21 @@
 .theme-toggle {
   padding: var(--sp-2);
   color: var(--clr-text-muted);
+}
+
+/* Phones: every header control is a 2.75rem (44px) tap target. */
+@media (max-width: $bp-sm) {
+  .menu-trigger,
+  .theme-toggle {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  /* Scoped to the header so the settings page's `.avatar-lg` keeps its size. */
+  .header-user .avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 }
 
 /*
