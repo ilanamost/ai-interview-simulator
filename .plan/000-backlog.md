@@ -2,9 +2,6 @@
 
 Current queue:
 
-- [] When the application loads, on the login and Signup pages, a password appeares in the password field.
-Password filed should be empty untill the user has entered credentials.
-
 (empty)
 
 ## DONE (Examples)
@@ -91,3 +88,11 @@ In addition, display a diagram from the backend schema, so that it will be clear
 
 - [V] There is no visible way to logout from the application on mobile
 | plan:.plan/022-2026-11-07-mobile-logout-access.md
+
+- [V] UI issues: 
+| plan:.plan/024-2026-11-08-password-field-and-accordion-spacing.md
+
+1. When the application loads, on the login and Signup pages, a password appeares in the password field.
+Password filed should be empty untill the user has entered credentials. 
+
+2. In the home page, when the user opens one of the accordions, the accordion header is too close to the content, add margin.
