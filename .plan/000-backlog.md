@@ -2,6 +2,9 @@
 
 Current queue:
 
+- [] When the application loads, on the login and Signup pages, a password appeares in the password field.
+Password field should be empty untill the user has entered credentials. It shouldn't be filled after refresh and logout either. 
+
 (empty)
 
 ## DONE (Examples)
@@ -86,13 +89,6 @@ What should I do next?
 In addition, display a diagram from the backend schema, so that it will be clear how the tables are connected with each other (this could be added in a separate file). I want everything explained in such a way that if someone would explain a recruiter about the system, after reading these files, he/she will be hired for the job. 
 | plan:.plan/020-2026-09-08-project-summary-docs.md
 
-- [V] There is no visible way to logout from the application on mobile
-| plan:.plan/022-2026-11-07-mobile-logout-access.md
-
-- [V] UI issues: 
-| plan:.plan/024-2026-11-08-password-field-and-accordion-spacing.md
-
-1. When the application loads, on the login and Signup pages, a password appeares in the password field.
-Password filed should be empty untill the user has entered credentials. 
-
-2. In the home page, when the user opens one of the accordions, the accordion header is too close to the content, add margin.
+- [V] Fix the issue: "12 vulnerabilities (10 moderate, 2 critical) To address issues that do not require attention, run:
+  npm audit fix" , which occurs on the deployed backend on render
+| plan:.plan/025-2026-11-08-api-npm-audit-devdeps.md
