@@ -2,6 +2,9 @@
 
 Current queue:
 
+- [] When the application loads, on the login and Signup pages, a password appeares in the password field.
+Password field should be empty untill the user has entered credentials. It shouldn't be filled after refresh and logout either. 
+
 (empty)
 
 ## DONE (Examples)
@@ -85,3 +88,7 @@ What should I do next?
 - [V] Add a summary file/s in the project that will summerize everything in the application: starting from the applications' purpose and functionallity to UI, UX, architecture, data, services, store, connections, authentication, authorization, etc'... You should split the code explanations to backend and frontend. You can make 2 separate files, one for backend and one for frontend. Every architectural choise made should be explained throughtly. 
 In addition, display a diagram from the backend schema, so that it will be clear how the tables are connected with each other (this could be added in a separate file). I want everything explained in such a way that if someone would explain a recruiter about the system, after reading these files, he/she will be hired for the job. 
 | plan:.plan/020-2026-09-08-project-summary-docs.md
+
+- [V] Fix the issue: "12 vulnerabilities (10 moderate, 2 critical) To address issues that do not require attention, run:
+  npm audit fix" , which occurs on the deployed backend on render
+| plan:.plan/025-2026-11-08-api-npm-audit-devdeps.md
