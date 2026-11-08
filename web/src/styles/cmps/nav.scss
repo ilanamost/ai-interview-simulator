@@ -1,3 +1,5 @@
+@use '../setup/variables' as *;
+
 /* Header route links. The active state comes from vue-router's own classes. */
 .app-nav {
   display: flex;
@@ -5,6 +7,16 @@
   gap: var(--sp-1);
   flex-wrap: wrap;
   margin-inline-start: var(--sp-4);
+
+  /*
+    Phones: the nav drops to its own full-width second header row (`order` moves it
+    after the control cluster, so the gear stays on row one), with no left indent.
+  */
+  @media (max-width: $bp-sm) {
+    order: 1;
+    flex-basis: 100%;
+    margin-inline-start: 0;
+  }
 }
 
 .nav-link {
@@ -28,5 +40,12 @@
   &.router-link-active {
     background-color: var(--clr-accent-soft);
     color: var(--clr-accent);
+  }
+
+  /* Phones: a 2.75rem (44px) tap target. */
+  @media (max-width: $bp-sm) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
   }
 }

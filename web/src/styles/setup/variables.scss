@@ -121,3 +121,13 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-md: 0 6px 20px rgb(0 0 0 / 45%);
 }
+
+/*
+  Breakpoints. Sass variables, not custom properties: a media query is evaluated
+  before any custom property resolves, so `@media (max-width: var(--x))` never
+  matches. A breakpoint is also the same in every theme, which is exactly the case
+  the styling rules reserve Sass variables for. Emits no CSS.
+
+  `$bp-sm` is the phone/desktop split: below it the header wraps onto two rows.
+*/
+$bp-sm: 40rem;

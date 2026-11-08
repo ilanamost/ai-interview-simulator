@@ -2,6 +2,9 @@
 
 Current queue:
 
+- [] When the application loads, on the login and Signup pages, a password appeares in the password field.
+Password filed should be empty untill the user has entered credentials.
+
 (empty)
 
 ## DONE (Examples)
@@ -82,5 +85,9 @@ What should I do next?
 - [V] Add gamification element. Add messages such as: a You're awesome!,  Good Job!, etc'... as alerts for users that are successfull in answering the interview questions, but not after each question, do it periodically. The messages will appear in a nice modal with a appropriate icons and animations.
 | plan:.plan/019-2026-09-07-gamification-encouragement.md
 
-- [V] Add a loader component, The loader will be displayed until each api call finishes running. Add it instead of the already existing loader.
-| plan:.plan/023-2026-11-01-api-loader-component.md
+- [V] Add a summary file/s in the project that will summerize everything in the application: starting from the applications' purpose and functionallity to UI, UX, architecture, data, services, store, connections, authentication, authorization, etc'... You should split the code explanations to backend and frontend. You can make 2 separate files, one for backend and one for frontend. Every architectural choise made should be explained throughtly. 
+In addition, display a diagram from the backend schema, so that it will be clear how the tables are connected with each other (this could be added in a separate file). I want everything explained in such a way that if someone would explain a recruiter about the system, after reading these files, he/she will be hired for the job. 
+| plan:.plan/020-2026-09-08-project-summary-docs.md
+
+- [V] There is no visible way to logout from the application on mobile
+| plan:.plan/022-2026-11-07-mobile-logout-access.md
