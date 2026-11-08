@@ -5,6 +5,7 @@ import type { UserSessionRepository } from '../repositories/user-session.reposit
 import type { PasswordService } from './auth/password.service.js'
 import type { AccessTokenPayload, TokenService } from './auth/token.service.js'
 import type { User } from '../types/user.js'
+import { AuthErrorCode } from '../types/auth.js'
 
 export interface AuthServiceDeps {
   userRepository: UserRepository
@@ -95,7 +96,8 @@ export function createAuthService(deps: AuthServiceDeps) {
     const email = normalizeEmail(input.email)
 
     const existing = await deps.userRepository.findByEmail(email, org)
-    if (existing) throw AppError.conflict('That email is already registered.', 'EMAIL_TAKEN')
+    if (existing)
+      throw AppError.conflict('That email is already registered.', AuthErrorCode.EmailTaken)
 
     const record = await deps.userRepository.createUser({
       id: nextId(),
@@ -113,12 +115,12 @@ export function createAuthService(deps: AuthServiceDeps) {
     // Same code and message whether the email is unknown or the password is wrong,
     // so the response is not an account-existence oracle.
     if (!record) {
-      throw AppError.unauthenticated('INVALID_CREDENTIALS', INVALID_CREDENTIALS)
+      throw AppError.unauthenticated(AuthErrorCode.InvalidCredentials, INVALID_CREDENTIALS)
     }
 
     const matches = await deps.passwords.verify(input.password, record.passwordHash)
     if (!matches) {
-      throw AppError.unauthenticated('INVALID_CREDENTIALS', INVALID_CREDENTIALS)
+      throw AppError.unauthenticated(AuthErrorCode.InvalidCredentials, INVALID_CREDENTIALS)
     }
 
     return issueSession(record)
@@ -154,21 +156,23 @@ export function createAuthService(deps: AuthServiceDeps) {
    * so a stolen refresh token stops working the moment the real user refreshes.
    */
   async function refresh(refreshToken: string | undefined): Promise<AuthResult> {
-    if (!refreshToken) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (!refreshToken)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
 
     const payload = deps.tokens.verifyRefreshToken(refreshToken)
-    if (payload.org !== org) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (payload.org !== org)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
 
     const session = await deps.sessionRepository.findSession(payload.sessionId, org)
     if (!session || session.revokedAt || session.expiresAt.getTime() <= now().getTime()) {
-      throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
     }
     if (session.refreshTokenHash !== deps.tokens.hashRefreshToken(refreshToken)) {
-      throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
     }
 
     const record = await deps.userRepository.findById(payload.userId, org)
-    if (!record) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (!record) throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
 
     await deps.sessionRepository.revokeSession(session.id, org)
     return issueSession(record)
@@ -191,22 +195,22 @@ export function createAuthService(deps: AuthServiceDeps) {
     // minted elsewhere must not find a session row here.
     const session = await deps.sessionRepository.findSession(payload.sessionId, payload.org)
     if (!session || session.revokedAt || session.expiresAt.getTime() <= now().getTime()) {
-      throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
     }
     if (session.userId !== payload.userId) {
-      throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+      throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
     }
   }
 
   async function getCurrentUser(ctx: AuthContext): Promise<User> {
     const record = await deps.userRepository.findById(ctx.userId, ctx.org)
-    if (!record) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (!record) throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
     return toUser(record)
   }
 
   async function updateProfile(ctx: AuthContext, patch: UpdateProfileInput): Promise<User> {
     const current = await deps.userRepository.findById(ctx.userId, ctx.org)
-    if (!current) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (!current) throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
 
     const update: {
       id: string
@@ -225,7 +229,7 @@ export function createAuthService(deps: AuthServiceDeps) {
       if (email !== current.email.toLowerCase()) {
         const taken = await deps.userRepository.findByEmail(email, ctx.org)
         if (taken && taken.id !== current.id) {
-          throw AppError.conflict('That email is already registered.', 'EMAIL_TAKEN')
+          throw AppError.conflict('That email is already registered.', AuthErrorCode.EmailTaken)
         }
       }
       update.email = email
@@ -236,13 +240,16 @@ export function createAuthService(deps: AuthServiceDeps) {
       // cannot lock the real owner out of their account.
       const matches = await deps.passwords.verify(patch.currentPassword ?? '', current.passwordHash)
       if (!matches) {
-        throw AppError.unauthenticated('INVALID_CREDENTIALS', 'Your current password is incorrect.')
+        throw AppError.unauthenticated(
+          AuthErrorCode.InvalidCredentials,
+          'Your current password is incorrect.'
+        )
       }
       update.passwordHash = await deps.passwords.hash(patch.password)
     }
 
     const updated = await deps.userRepository.updateUser(update)
-    if (!updated) throw AppError.unauthenticated('UNAUTHENTICATED', SESSION_INVALID)
+    if (!updated) throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, SESSION_INVALID)
 
     if (update.passwordHash) {
       // .rule/security-rules.md: invalidate sessions on password change. The caller's

@@ -6,6 +6,7 @@ import type {
   JobTitle,
   Report
 } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 import { env } from '@/config/env'
 import { InterviewError } from './interview.service'
 import { request } from './interview-http.service'
@@ -272,7 +273,10 @@ export function createHttpReportHistorySource(baseUrl: string): ReportHistorySou
       } catch (err) {
         // A stale link, another org's id, or an interview with nothing evaluated yet —
         // all "there is no report at this address", which the view shows as not found.
-        if (err instanceof InterviewError && (err.code === 'NOT_FOUND' || err.code === 'NO_EVALUATION')) {
+        if (
+          err instanceof InterviewError &&
+          (err.code === InterviewErrorCode.NotFound || err.code === InterviewErrorCode.NoEvaluation)
+        ) {
           return null
         }
         throw err

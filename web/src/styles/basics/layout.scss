@@ -1,3 +1,5 @@
+@use '../setup/variables' as *;
+
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -23,7 +25,35 @@
   }
 
   & .brand-icon {
+    flex: none;
     color: var(--clr-accent);
+  }
+
+  /*
+    Phones: one non-wrapping row cannot hold brand, nav and the control cluster, and
+    the overflow pushed the gear (the only way to Logout) past the viewport edge.
+    Wrapping keeps every control on screen:
+    - row one: brand, then theme toggle, avatar and gear, right-aligned by the
+      toggle's auto margin. The brand may shrink and wrap its own text onto two
+      lines, so the controls never get pushed off the row.
+    - row two: the nav, full width (see `cmps/nav.scss`).
+  */
+  @media (max-width: $bp-sm) {
+    flex-wrap: wrap;
+    row-gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+
+    /*
+      `flex: 1 1 0`, not just `min-width: 0`: wrapping is decided on the flex base
+      size, so with `auto` the brand's one-line width (~200px) pushed the avatar and
+      gear onto a second row, and the right-anchored menu then opened off-screen.
+      A zero basis lets the controls claim row one first; the brand takes what is
+      left and wraps its own text.
+    */
+    & .brand {
+      flex: 1 1 0;
+      min-width: 0;
+    }
   }
 }
 

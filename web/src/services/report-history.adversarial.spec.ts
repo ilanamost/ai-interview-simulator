@@ -13,6 +13,7 @@ import type {
   ReportHistorySource
 } from './report-history.service'
 import type { InterviewConfig, InterviewSession, Report } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 
 /*
  * QA adversarial pass on mock-mode history (plan 013, named risk #1).
@@ -352,7 +353,7 @@ describe('the two sources answer the same scenario the same way', () => {
         return {
           ok: false,
           status: 404,
-          json: async () => ({ error: { code: 'NOT_FOUND', message: 'No interview found.' } })
+          json: async () => ({ error: { code: InterviewErrorCode.NotFound, message: 'No interview found.' } })
         } as Response
       }
 

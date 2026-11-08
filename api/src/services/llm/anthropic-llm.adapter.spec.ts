@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { ErrorCode } from '../../types/error.js'
 
 const parseMock = vi.fn()
 
@@ -50,7 +51,7 @@ describe('createAnthropicLlmAdapter', () => {
           config: { jobTitle: 'frontend', level: 'mid', type: 'technical', questionCount: 3 },
           askedTopics: []
         })
-      ).rejects.toMatchObject({ code: 'UPSTREAM_UNAVAILABLE', status: 502 })
+      ).rejects.toMatchObject({ code: ErrorCode.UpstreamUnavailable, status: 502 })
     })
 
     it('uses the model selected for the interview', async () => {
@@ -142,7 +143,7 @@ describe('createAnthropicLlmAdapter', () => {
         askedTopics: []
       })
 
-      await expect(promise).rejects.toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' })
+      await expect(promise).rejects.toMatchObject({ code: ErrorCode.UpstreamUnavailable })
       await expect(promise).rejects.not.toThrow(/sk-abc123/)
     })
   })

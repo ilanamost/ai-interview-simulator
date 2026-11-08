@@ -3,6 +3,7 @@ import request from 'supertest'
 import { ORG, buildHarness, makeInterviewService, signUp } from './test/app-harness.js'
 import { ACCESS_TOKEN_COOKIE } from './utils/auth-cookie.js'
 import { AppError } from './utils/app-error.js'
+import { ErrorCode } from './types/error.js'
 import type { InterviewConfig, InterviewSession, InterviewSummary } from './types/interview.js'
 import type { InterviewService } from './services/interview.service.js'
 
@@ -63,7 +64,7 @@ describe('POST /api/interview', () => {
     })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
     expect(res.body.requestId).toEqual(expect.any(String))
   })
 
@@ -115,7 +116,7 @@ describe('POST /api/interview', () => {
     })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
     expect(service.startInterview).not.toHaveBeenCalled()
   })
 
@@ -316,7 +317,7 @@ describe('GET /api/interview/:id', () => {
 
     expect(res.status).toBe(404)
     expect(res.body).toEqual({
-      error: { code: 'NOT_FOUND', message: 'No interview found with id x.' },
+      error: { code: ErrorCode.NotFound, message: 'No interview found with id x.' },
       requestId: expect.any(String)
     })
   })
@@ -381,7 +382,7 @@ describe('POST /api/interview/:id/answer', () => {
       .send({ questionId: 'q1', text: 'again' })
 
     expect(res.status).toBe(409)
-    expect(res.body.error.code).toBe('CONFLICT')
+    expect(res.body.error.code).toBe(ErrorCode.Conflict)
   })
 })
 
@@ -391,7 +392,7 @@ describe('GET /api/interview/:id/report', () => {
       getReport: vi
         .fn()
         .mockRejectedValue(
-          AppError.domain('NO_EVALUATION', 'There are no answers to report on yet.')
+          AppError.domain(ErrorCode.NoEvaluation, 'There are no answers to report on yet.')
         )
     })
     const { agent } = await authenticatedApp(service)
@@ -399,7 +400,7 @@ describe('GET /api/interview/:id/report', () => {
     const res = await agent.get('/api/interview/interview-1/report')
 
     expect(res.status).toBe(422)
-    expect(res.body.error.code).toBe('NO_EVALUATION')
+    expect(res.body.error.code).toBe(ErrorCode.NoEvaluation)
   })
 })
 
@@ -484,7 +485,7 @@ describe('error handling and cross-cutting concerns', () => {
     const res = await request(app).get('/api/nope')
 
     expect(res.status).toBe(404)
-    expect(res.body.error.code).toBe('NOT_FOUND')
+    expect(res.body.error.code).toBe(ErrorCode.NotFound)
   })
 
   it('never leaks internal error details for an unexpected (non-AppError) failure', async () => {
@@ -496,7 +497,7 @@ describe('error handling and cross-cutting concerns', () => {
     const res = await agent.get('/api/interview/interview-1')
 
     expect(res.status).toBe(500)
-    expect(res.body.error.code).toBe('INTERNAL_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Internal)
     expect(JSON.stringify(res.body)).not.toContain('db connection string leaked')
   })
 

@@ -3,6 +3,7 @@ import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import { ACCESS_SECRET, PASSWORD, buildHarness, cookieValue, signUp } from '../test/app-harness.js'
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../utils/auth-cookie.js'
+import { ErrorCode } from '../types/error.js'
 
 const TINY_AVATAR = 'data:image/png;base64,iVBORw0KGgo='
 
@@ -110,7 +111,7 @@ describe('PATCH /api/user', () => {
     const res = await agent.patch('/api/user').send({ avatarUrl: OVERSIZED_AVATAR })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
   })
 
   it('rejects an avatar that is not an image data URL', async () => {
@@ -150,7 +151,7 @@ describe('PATCH /api/user', () => {
     const res = await agent.patch('/api/user').send({ password: 'a-brand-new-password' })
 
     expect(res.status).toBe(400)
-    expect(res.body.error.code).toBe('VALIDATION_ERROR')
+    expect(res.body.error.code).toBe(ErrorCode.Validation)
   })
 
   it('rejects a password change whose currentPassword is wrong', async () => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -28,6 +28,58 @@ const errors = reactive<Record<'name' | 'email' | 'password', string>>({
  */
 const showPassword = ref(false)
 
+const passwordInput = ref<HTMLInputElement | null>(null)
+
+/**
+ * True until the visitor interacts with the password field. While true the input is
+ * `readonly` (browsers do not autofill a readonly input) and wears `is-untouched`, which
+ * hides any fill that still lands. Component-local, so every mount starts untouched —
+ * including the one after logout.
+ */
+const isUntouched = ref(true)
+const clearTimers: ReturnType<typeof setTimeout>[] = []
+
+/**
+ * Nothing in the app sets the password, so a value that shows up before the visitor
+ * touched the field is the browser autofilling a saved credential. Browsers fill
+ * after mount, so the check runs at mount and again shortly after.
+ */
+const AUTOFILL_CHECK_DELAYS_MS = [0, 100, 500, 1500]
+
+function clearUntouchedPassword() {
+  if (!isUntouched.value) return
+
+  form.password = ''
+  if (passwordInput.value) passwordInput.value.value = ''
+}
+
+function markPasswordTouched() {
+  isUntouched.value = false
+}
+
+/** (Re)starts the clearing window; a previous one is cancelled first. */
+function startClearWindow() {
+  clearTimers.forEach(clearTimeout)
+  clearTimers.length = 0
+
+  for (const delay of AUTOFILL_CHECK_DELAYS_MS) {
+    clearTimers.push(setTimeout(clearUntouchedPassword, delay))
+  }
+}
+
+/**
+ * Browser autofill sets the value and fires a bare `input` event, with no `beforeinput`.
+ * Every user edit (typing, paste, drop, dictation, IME, replacement) fires `beforeinput`
+ * first, so that is the signal that the visitor owns the value.
+ */
+function onBeforeInput() {
+  markPasswordTouched()
+}
+
+onMounted(startClearWindow)
+
+onBeforeUnmount(() => clearTimers.forEach(clearTimeout))
+
 /** Deliberately loose: the API is the authority on what a valid address is. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -35,6 +87,8 @@ function setMode(next: Mode) {
   mode.value = next
   clearErrors()
   showPassword.value = false
+  // The same input changes purpose, and browsers may fill it again for the new mode.
+  if (isUntouched.value) startClearWindow()
 }
 
 function clearErrors() {
@@ -76,6 +130,8 @@ function greetingName(): string {
 }
 
 async function onSubmit() {
+  // Submitting means the visitor owns whatever is in the field now.
+  markPasswordTouched()
   if (!validate()) return
 
   const email = form.email.trim()
@@ -159,10 +215,19 @@ async function onSubmit() {
           <div class="password-field">
             <input
               id="password"
+              ref="passwordInput"
               v-model="form.password"
               class="control"
               :type="showPassword ? 'text' : 'password'"
               :autocomplete="isSignup ? 'new-password' : 'current-password'"
+              :class="{ 'is-untouched': isUntouched }"
+              :readonly="isUntouched"
+              @focus="markPasswordTouched"
+              @pointerdown="markPasswordTouched"
+              @touchstart.passive="markPasswordTouched"
+              @beforeinput="onBeforeInput"
+              @keydown="markPasswordTouched"
+              @paste="markPasswordTouched"
             />
             <button
               type="button"

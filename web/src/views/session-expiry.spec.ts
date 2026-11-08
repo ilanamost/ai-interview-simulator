@@ -8,6 +8,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useInterviewStore } from '@/stores/interview.store'
 import { InterviewError, type InterviewSource } from '@/services/interview.service'
 import type { InterviewSession, Question } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { signIn } from '@/test/auth-fixture'
 import { stubMatchMedia } from '@/test/theme-fixture'
 
@@ -30,7 +32,7 @@ beforeEach(() => {
  * no longer submit while the header still shows them signed in.
  */
 
-const EXPIRED = () => new InterviewError('UNAUTHENTICATED', 'You must be signed in to do that.')
+const EXPIRED = () => new InterviewError(AuthErrorCode.Unauthenticated, 'You must be signed in to do that.')
 
 function makeQuestion(id = 'q1'): Question {
   return { id, text: `Question ${id}`, topic: 'Topic', isFollowUp: false, keywords: [] }
@@ -130,7 +132,7 @@ describe('an interview store call that comes back UNAUTHENTICATED', () => {
     store.setSource({
       ...makeExpiringSource(),
       async evaluateAnswer() {
-        throw new InterviewError('EMPTY_ANSWER', 'Write something first.')
+        throw new InterviewError(InterviewErrorCode.EmptyAnswer, 'Write something first.')
       }
     })
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { AuthError, createHttpAuthSource, type AuthSource } from './auth.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { AuthErrorCode, AuthStatus } from '@/types/auth'
 import { makeUser } from '@/test/auth-fixture'
 
 /**
@@ -42,7 +43,7 @@ describe('refresh-and-retry under pressure', () => {
 
   it('stops after the refresh itself is rejected, without attempting the retry', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Signed out.' } })
+      jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Signed out.' } })
     )
 
     const source = createHttpAuthSource(BASE_URL)
@@ -58,7 +59,7 @@ describe('refresh-and-retry under pressure', () => {
 
   it('retries exactly once and never loops when the refresh succeeds but the retry 401s', async () => {
     const unauthenticated = () =>
-      jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Signed out.' } })
+      jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Signed out.' } })
     fetchMock
       .mockResolvedValueOnce(unauthenticated())
       .mockResolvedValueOnce(jsonResponse(200, { user: makeUser() }))
@@ -79,7 +80,7 @@ describe('refresh-and-retry under pressure', () => {
   it('sends credentials on the refresh call too, or the rotation cookie is dropped', async () => {
     fetchMock
       .mockResolvedValueOnce(
-        jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Expired.' } })
+        jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Expired.' } })
       )
       .mockResolvedValueOnce(jsonResponse(200, { user: makeUser() }))
       .mockResolvedValueOnce(jsonResponse(200, { user: makeUser() }))
@@ -94,7 +95,7 @@ describe('refresh-and-retry under pressure', () => {
   it('replays the PATCH method and body intact on the retry, not a bare GET', async () => {
     fetchMock
       .mockResolvedValueOnce(
-        jsonResponse(401, { error: { code: 'UNAUTHENTICATED', message: 'Expired.' } })
+        jsonResponse(401, { error: { code: AuthErrorCode.Unauthenticated, message: 'Expired.' } })
       )
       .mockResolvedValueOnce(jsonResponse(200, { user: makeUser() }))
       .mockResolvedValueOnce(jsonResponse(200, { user: makeUser({ name: 'Renamed' }) }))
@@ -114,14 +115,17 @@ describe('refresh-and-retry under pressure', () => {
   it('surfaces a wrong current password without burning a refresh', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(401, {
-        error: { code: 'INVALID_CREDENTIALS', message: 'Your current password is incorrect.' }
+        error: {
+          code: AuthErrorCode.InvalidCredentials,
+          message: 'Your current password is incorrect.'
+        }
       })
     )
 
     const source = createHttpAuthSource(BASE_URL)
     await expect(
       source.updateProfile({ password: 'new-password-1', currentPassword: 'wrong' })
-    ).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' })
+    ).rejects.toMatchObject({ code: AuthErrorCode.InvalidCredentials })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
@@ -146,7 +150,7 @@ describe('malformed server answers', () => {
     const err = await source.login({ email: 'a@b.co', password: 'x' }).catch(e => e)
 
     expect(err).toBeInstanceOf(AuthError)
-    expect(err.code).toBe('UNKNOWN_ERROR')
+    expect(err.code).toBe(AuthErrorCode.UnknownError)
     expect(err.message).not.toContain('SyntaxError')
     expect(err.message).not.toContain('<')
   })
@@ -189,13 +193,15 @@ describe('rapid repeated interaction on the auth store', () => {
 
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
-    expect(store.status).toBe('ready')
+    expect(store.status).toBe(AuthStatus.Ready)
   })
 
   it('still clears local state when every logout call rejects', async () => {
     const store = useAuthStore()
     store.setSource(
-      stubSource({ logout: vi.fn().mockRejectedValue(new AuthError('NETWORK_ERROR', 'offline')) })
+      stubSource({
+        logout: vi.fn().mockRejectedValue(new AuthError(AuthErrorCode.NetworkError, 'offline'))
+      })
     )
     store.user = makeUser()
 
@@ -209,7 +215,7 @@ describe('rapid repeated interaction on the auth store', () => {
     const store = useAuthStore()
     store.setSource(
       stubSource({
-        login: vi.fn().mockRejectedValue(new AuthError('INVALID_CREDENTIALS', 'nope'))
+        login: vi.fn().mockRejectedValue(new AuthError(AuthErrorCode.InvalidCredentials, 'nope'))
       })
     )
 
@@ -217,7 +223,7 @@ describe('rapid repeated interaction on the auth store', () => {
       await store.login({ email: 'a@b.co', password: 'wrong' })
     }
 
-    expect(store.status).toBe('ready')
+    expect(store.status).toBe(AuthStatus.Ready)
     expect(store.isBusy).toBe(false)
     expect(store.isAuthenticated).toBe(false)
   })
@@ -228,7 +234,9 @@ describe('rapid repeated interaction on the auth store', () => {
       stubSource({
         login: vi
           .fn()
-          .mockRejectedValue(new AuthError('INVALID_CREDENTIALS', 'Email or password is incorrect.'))
+          .mockRejectedValue(
+            new AuthError(AuthErrorCode.InvalidCredentials, 'Email or password is incorrect.')
+          )
       })
     )
 
@@ -245,12 +253,14 @@ describe('rapid repeated interaction on the auth store', () => {
     const store = useAuthStore()
     store.setSource(
       stubSource({
-        getCurrentUser: vi.fn().mockRejectedValue(new AuthError('NETWORK_ERROR', 'offline'))
+        getCurrentUser: vi
+          .fn()
+          .mockRejectedValue(new AuthError(AuthErrorCode.NetworkError, 'offline'))
       })
     )
 
     await expect(store.fetchMe()).resolves.toBe(false)
     expect(store.user).toBeNull()
-    expect(store.status).toBe('ready')
+    expect(store.status).toBe(AuthStatus.Ready)
   })
 })

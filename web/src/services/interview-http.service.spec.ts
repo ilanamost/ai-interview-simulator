@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHttpInterviewSource } from './interview-http.service'
 import { InterviewError } from './interview.service'
 import type { Answer, InterviewConfig, InterviewSession, Question } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
+import { createPinia, setActivePinia } from 'pinia'
+import { useLoaderStore } from '@/stores/loader.store'
 
 const BASE_URL = 'http://localhost:3001'
 
@@ -121,12 +125,12 @@ describe('createHttpInterviewSource', () => {
 
   it('maps a non-2xx response into an InterviewError carrying the backend code and message', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse(404, { error: { code: 'NOT_FOUND', message: 'No interview found.' } })
+      jsonResponse(404, { error: { code: InterviewErrorCode.NotFound, message: 'No interview found.' } })
     )
     const source = createHttpInterviewSource(BASE_URL)
 
     await expect(source.getReport(makeSession())).rejects.toMatchObject({
-      code: 'NOT_FOUND',
+      code: InterviewErrorCode.NotFound,
       message: 'No interview found.'
     })
     await expect(source.getReport(makeSession())).rejects.toBeInstanceOf(InterviewError)
@@ -137,7 +141,7 @@ describe('createHttpInterviewSource', () => {
     const source = createHttpInterviewSource(BASE_URL)
 
     await expect(source.getReport(makeSession())).rejects.toMatchObject({
-      code: 'NETWORK_ERROR'
+      code: InterviewErrorCode.NetworkError
     })
   })
 
@@ -149,7 +153,7 @@ describe('createHttpInterviewSource', () => {
   describe('an access token that expired mid-interview', () => {
     const expired = () =>
       jsonResponse(401, {
-        error: { code: 'UNAUTHENTICATED', message: 'You must be signed in to do that.' }
+        error: { code: AuthErrorCode.Unauthenticated, message: 'You must be signed in to do that.' }
       })
 
     it('rotates the session and replays the answer, so the user never notices', async () => {
@@ -209,7 +213,7 @@ describe('createHttpInterviewSource', () => {
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'UNAUTHENTICATED'
+        code: AuthErrorCode.Unauthenticated
       })
       // The original call, one refresh, and nothing more — no retry loop.
       expect(fetchMock.mock.calls.length).toBe(2)
@@ -223,7 +227,7 @@ describe('createHttpInterviewSource', () => {
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'UNAUTHENTICATED'
+        code: AuthErrorCode.Unauthenticated
       })
       expect(fetchMock.mock.calls.length).toBe(3)
     })
@@ -231,26 +235,97 @@ describe('createHttpInterviewSource', () => {
     it('does not burn a refresh on a failure that has nothing to do with the session', async () => {
       // A 409 on an already-answered question is the server's real answer.
       fetchMock.mockResolvedValue(
-        jsonResponse(409, { error: { code: 'CONFLICT', message: 'Already answered.' } })
+        jsonResponse(409, { error: { code: InterviewErrorCode.Conflict, message: 'Already answered.' } })
       )
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(
         source.evaluateAnswer(makeSession(), makeQuestion(), makeAnswer())
-      ).rejects.toMatchObject({ code: 'CONFLICT' })
+      ).rejects.toMatchObject({ code: InterviewErrorCode.Conflict })
       expect(fetchMock.mock.calls.length).toBe(1)
     })
 
     it('treats a 401 that is not UNAUTHENTICATED as final', async () => {
       fetchMock.mockResolvedValue(
-        jsonResponse(401, { error: { code: 'INVALID_CREDENTIALS', message: 'Nope.' } })
+        jsonResponse(401, { error: { code: AuthErrorCode.InvalidCredentials, message: 'Nope.' } })
       )
       const source = createHttpInterviewSource(BASE_URL)
 
       await expect(source.getReport(makeSession())).rejects.toMatchObject({
-        code: 'INVALID_CREDENTIALS'
+        code: AuthErrorCode.InvalidCredentials
       })
       expect(fetchMock.mock.calls.length).toBe(1)
     })
+  })
+})
+
+/**
+ * Plan 023: every interview call drives the global API loader through `trackRequest`,
+ * and a failed or timed-out call must not leave it stuck on screen.
+ */
+describe('createHttpInterviewSource and the global API loader', () => {
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('shows the loader while a call is in flight and clears it once it answers', async () => {
+    let answer!: (response: Response) => void
+    fetchMock.mockReturnValue(new Promise<Response>(resolve => (answer = resolve)))
+    const loader = useLoaderStore()
+
+    const call = createHttpInterviewSource(BASE_URL).startInterview(makeConfig())
+    expect(loader.isLoading).toBe(true)
+
+    answer(jsonResponse(201, makeSession()))
+    await call
+    expect(loader.isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 4xx', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'Bad config' } })
+    )
+
+    await expect(createHttpInterviewSource(BASE_URL).startInterview(makeConfig())).rejects.toBeInstanceOf(
+      InterviewError
+    )
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader after a 5xx', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(500, {}))
+
+    await expect(createHttpInterviewSource(BASE_URL).startInterview(makeConfig())).rejects.toBeInstanceOf(
+      InterviewError
+    )
+    expect(useLoaderStore().isLoading).toBe(false)
+  })
+
+  it('clears the loader when the call times out and is aborted', async () => {
+    vi.useFakeTimers()
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+        })
+    )
+    const loader = useLoaderStore()
+
+    const call = createHttpInterviewSource(BASE_URL).startInterview(makeConfig())
+    const settled = expect(call).rejects.toMatchObject({ code: InterviewErrorCode.NetworkError })
+    expect(loader.isLoading).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(30000)
+    await settled
+    expect(loader.isLoading).toBe(false)
   })
 })

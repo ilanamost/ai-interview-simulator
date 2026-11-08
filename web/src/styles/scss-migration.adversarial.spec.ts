@@ -57,6 +57,22 @@ function allStylesheets(dir = STYLES, prefix = ''): string[] {
   })
 }
 
+const TOKENS = 'setup/variables.scss'
+
+/**
+ * A leaf's own compiled CSS. A leaf that `@use`s the token module (for a Sass-only value
+ * such as the `$bp-sm` breakpoint) gets the token CSS prepended when compiled on its own,
+ * while in the bundle Sass emits that module exactly once, at its own position. Strip
+ * that prefix so the marker below is the leaf's own first rule, not the token block.
+ */
+function ownOutput(rel: string): string {
+  const own = compile(join(STYLES, rel), OPTS).css.trim()
+  if (rel === TOKENS) return own
+
+  const tokens = compile(join(STYLES, TOKENS), OPTS).css.trim()
+  return own.startsWith(tokens) ? own.slice(tokens.length).trim() : own
+}
+
 describe('the SCSS tree compiles', () => {
   /**
    * Regression guard for the namespace collision that the plan's literal
@@ -73,6 +89,12 @@ describe('the SCSS tree compiles', () => {
     expect(css).toContain('--clr-bg')
     expect(css.length).toBeGreaterThan(10_000)
   })
+
+  /** Several leaves `@use` the token module; Sass must still emit its CSS only once. */
+  it('emits the token block once, however many leaves load the token module', () => {
+    const { css } = compile(ENTRY, OPTS)
+    expect(css.match(/--clr-bg: #f4f4f6/g) ?? []).toHaveLength(1)
+  })
 })
 
 describe('cascade order survives the barrel conversion', () => {
@@ -85,7 +107,7 @@ describe('cascade order survives the barrel conversion', () => {
     const { css: full } = compile(ENTRY, OPTS)
 
     const positions = CASCADE_ORDER.map((rel) => {
-      const own = compile(join(STYLES, rel), OPTS).css.trim()
+      const own = ownOutput(rel)
       const marker = own.slice(0, 60)
       const at = full.indexOf(marker)
       expect(at, `${rel} is not present in the compiled bundle`).toBeGreaterThan(-1)
