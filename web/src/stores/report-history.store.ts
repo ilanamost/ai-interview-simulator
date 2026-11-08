@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { InterviewSummary } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { InterviewError } from '@/services/interview.service'
 import {
   DEFAULT_PAGE_SIZE,
@@ -43,7 +44,7 @@ function toUserMessage(err: unknown): string {
 
 /** Same reasoning as `interview.store.ts`: a session that died must not look alive. */
 function signOutIfSessionExpired(err: unknown) {
-  if (err instanceof InterviewError && err.code === 'UNAUTHENTICATED') useAuthStore().expire()
+  if (err instanceof InterviewError && err.code === AuthErrorCode.Unauthenticated) useAuthStore().expire()
 }
 
 export const useReportHistoryStore = defineStore('report-history', () => {

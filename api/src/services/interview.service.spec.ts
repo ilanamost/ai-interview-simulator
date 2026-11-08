@@ -4,6 +4,7 @@ import type { InterviewRepository } from '../repositories/interview.repository.j
 import type { LlmAdapter } from './llm/llm.adapter.js'
 import type { InterviewConfig, InterviewSession, Question } from '../types/interview.js'
 import { AppError } from '../utils/app-error.js'
+import { ErrorCode } from '../types/error.js'
 
 const ORG = 'default'
 
@@ -86,7 +87,7 @@ describe('interview.service', () => {
       const service = createInterviewService({ repository, llm: makeLlm() })
 
       await expect(service.getInterview(ORG, 'missing')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        code: ErrorCode.NotFound,
         status: 404
       })
     })
@@ -280,7 +281,7 @@ describe('interview.service', () => {
       const service = createInterviewService({ repository, llm: makeLlm() })
 
       await expect(service.submitAnswer(ORG, 'interview-1', 'q1', '   ')).rejects.toMatchObject({
-        code: 'EMPTY_ANSWER',
+        code: ErrorCode.EmptyAnswer,
         status: 422
       })
       expect(repository.getInterview).not.toHaveBeenCalled()
@@ -294,7 +295,7 @@ describe('interview.service', () => {
       await expect(
         service.submitAnswer(ORG, session.id, 'unknown-question', 'text')
       ).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        code: ErrorCode.NotFound,
         status: 404
       })
     })
@@ -310,7 +311,7 @@ describe('interview.service', () => {
       const service = createInterviewService({ repository, llm: makeLlm() })
 
       await expect(service.submitAnswer(ORG, session.id, 'q1', 'text')).rejects.toMatchObject({
-        code: 'CONFLICT',
+        code: ErrorCode.Conflict,
         status: 409
       })
     })
@@ -403,7 +404,7 @@ describe('interview.service', () => {
       const service = createInterviewService({ repository, llm: makeLlm() })
 
       await expect(service.getReport(ORG, session.id)).rejects.toMatchObject({
-        code: 'NO_EVALUATION',
+        code: ErrorCode.NoEvaluation,
         status: 422
       })
     })

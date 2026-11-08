@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import { AppError } from '../../utils/app-error.js'
+import { AuthErrorCode } from '../../types/auth.js'
 
 /**
  * Both tokens are JWTs delivered as HttpOnly cookies, so the browser's JS never
@@ -40,12 +41,12 @@ function readPayload(secret: string, token: string): AccessTokenPayload {
   } catch {
     // Expired, tampered, wrong secret and malformed all collapse into one answer:
     // the client learns nothing about why beyond "sign in again".
-    throw AppError.unauthenticated('UNAUTHENTICATED', UNAUTHENTICATED)
+    throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, UNAUTHENTICATED)
   }
 
   const { sub, org, sid } = (claims ?? {}) as Claims
   if (typeof sub !== 'string' || typeof org !== 'string' || typeof sid !== 'string') {
-    throw AppError.unauthenticated('UNAUTHENTICATED', UNAUTHENTICATED)
+    throw AppError.unauthenticated(AuthErrorCode.Unauthenticated, UNAUTHENTICATED)
   }
   return { userId: sub, org, sessionId: sid }
 }

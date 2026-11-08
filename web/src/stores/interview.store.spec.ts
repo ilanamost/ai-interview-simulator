@@ -6,6 +6,7 @@ import { loadSnapshot } from '@/services/session-storage.service'
 import { loadHistoryEntries } from '@/services/report-history.service'
 import { ENCOURAGEMENT_INTERVAL, SUCCESS_GRADE_THRESHOLD } from '@/services/gamification.service'
 import type { Evaluation, InterviewConfig, InterviewSession, Question, Report } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
 
 const CONFIG: InterviewConfig = {
   jobTitle: 'frontend',
@@ -522,7 +523,7 @@ describe('interview store', () => {
       fetchMock.mockResolvedValue({
         ok: false,
         status: 404,
-        json: async () => ({ error: { code: 'NOT_FOUND', message: 'Gone.' } })
+        json: async () => ({ error: { code: InterviewErrorCode.NotFound, message: 'Gone.' } })
       })
 
       setActivePinia(createPinia())

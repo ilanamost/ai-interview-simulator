@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import type { NextFunction, Request, Response } from 'express'
 import { validateBody, validateParams, validateQuery } from './validate.js'
+import { ErrorCode } from '../types/error.js'
 
 function makeReq(overrides: Partial<Request> = {}): Request {
   return { body: {}, params: {}, query: {}, ...overrides } as Request
@@ -27,7 +28,7 @@ describe('validateBody', () => {
     validateBody(schema)(req, {} as Response, next)
 
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'VALIDATION_ERROR', status: 400 })
+      expect.objectContaining({ code: ErrorCode.Validation, status: 400 })
     )
   })
 
@@ -37,7 +38,7 @@ describe('validateBody', () => {
 
     validateBody(schema)(req, {} as Response, next)
 
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: ErrorCode.Validation }))
   })
 })
 
@@ -70,7 +71,7 @@ describe('validateQuery', () => {
     validateQuery(schema)(req, {} as Response, next)
 
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'VALIDATION_ERROR', status: 400 })
+      expect.objectContaining({ code: ErrorCode.Validation, status: 400 })
     )
   })
 
@@ -80,7 +81,7 @@ describe('validateQuery', () => {
 
     validateQuery(schema)(req, {} as Response, next)
 
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: ErrorCode.Validation }))
   })
 })
 
@@ -103,7 +104,7 @@ describe('validateParams', () => {
     validateParams(schema)(req, {} as Response, next)
 
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'VALIDATION_ERROR', status: 400 })
+      expect.objectContaining({ code: ErrorCode.Validation, status: 400 })
     )
   })
 })

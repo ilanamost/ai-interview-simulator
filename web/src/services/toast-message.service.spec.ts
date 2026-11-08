@@ -7,6 +7,7 @@ import {
   PROFILE_TOAST,
   REPORT_TOAST
 } from './toast-message.service'
+import { AuthErrorCode } from '@/types/auth'
 
 /**
  * These tests guard the module's shape — that a group exists, is non-empty, and holds no
@@ -35,9 +36,8 @@ describe('toast message groups', () => {
   })
 
   it.each(Object.keys(GROUPS))('%s has no empty or whitespace-only copy', name => {
-    const group: Record<string, string | ((...args: string[]) => string)> = GROUPS[
-      name as keyof typeof GROUPS
-    ]
+    const group: Record<string, string | ((...args: string[]) => string)> =
+      GROUPS[name as keyof typeof GROUPS]
 
     for (const [key, value] of Object.entries(group)) {
       expect(`${key}: ${render(value).trim()}`).not.toBe(`${key}: `)
@@ -47,18 +47,20 @@ describe('toast message groups', () => {
 
 describe('AUTH_ERROR_BY_CODE', () => {
   it('covers every code the auth store maps', () => {
-    expect(Object.keys(AUTH_ERROR_BY_CODE).sort()).toEqual([
-      'EMAIL_TAKEN',
-      'INVALID_CREDENTIALS',
-      'NETWORK_ERROR',
-      'UNAUTHENTICATED'
-    ])
+    expect(Object.keys(AUTH_ERROR_BY_CODE).sort()).toEqual(
+      [
+        AuthErrorCode.EmailTaken,
+        AuthErrorCode.InvalidCredentials,
+        AuthErrorCode.NetworkError,
+        AuthErrorCode.Unauthenticated
+      ].sort()
+    )
   })
 
   it('shares one string with the transport rather than duplicating it', () => {
     // The duplicate this module exists to kill: the store's NETWORK_ERROR copy and the
     // message `auth.service.ts` throws are now the same constant, not two literals.
-    expect(AUTH_ERROR_BY_CODE.NETWORK_ERROR).toBe(API_TOAST.networkUnreachable)
+    expect(AUTH_ERROR_BY_CODE[AuthErrorCode.NetworkError]).toBe(API_TOAST.networkUnreachable)
   })
 })
 

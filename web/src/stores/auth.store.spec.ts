@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from './auth.store'
 import { AuthError, type AuthSource } from '@/services/auth.service'
+import { AuthErrorCode, AuthStatus } from '@/types/auth'
 import { makeUser } from '@/test/auth-fixture'
 
 /**
@@ -52,7 +53,7 @@ describe('auth store', () => {
 
       expect(store.isAuthenticated).toBe(true)
       expect(store.user?.email).toBe('dev@example.com')
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
     })
 
     it('resolves to signed out without an error when nobody is signed in', async () => {
@@ -63,20 +64,20 @@ describe('auth store', () => {
 
       expect(result).toBe(false)
       expect(store.isAuthenticated).toBe(false)
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
       expect(store.error).toBeNull()
     })
 
     it('still settles as signed out when the server is unreachable, so the app can boot', async () => {
       const store = storeWith({
         getCurrentUser: async () => {
-          throw new AuthError('NETWORK_ERROR', 'boom')
+          throw new AuthError(AuthErrorCode.NetworkError, 'boom')
         }
       })
 
       await expect(store.fetchMe()).resolves.toBe(false)
       expect(store.isAuthenticated).toBe(false)
-      expect(store.status).toBe('ready')
+      expect(store.status).toBe(AuthStatus.Ready)
     })
   })
 
@@ -85,7 +86,11 @@ describe('auth store', () => {
       const signup = vi.fn(async () => makeUser({ name: 'New Person' }))
       const store = storeWith({ signup })
 
-      const ok = await store.signup({ email: 'new@example.com', name: 'New Person', password: 'hunter2hunter2' })
+      const ok = await store.signup({
+        email: 'new@example.com',
+        name: 'New Person',
+        password: 'hunter2hunter2'
+      })
 
       expect(ok).toBe(true)
       expect(store.user?.name).toBe('New Person')
@@ -99,11 +104,15 @@ describe('auth store', () => {
     it('reports that the email is taken rather than a generic failure', async () => {
       const store = storeWith({
         signup: async () => {
-          throw new AuthError('EMAIL_TAKEN', 'Email already in use.')
+          throw new AuthError(AuthErrorCode.EmailTaken, 'Email already in use.')
         }
       })
 
-      const ok = await store.signup({ email: 'taken@example.com', name: 'A', password: 'hunter2hunter2' })
+      const ok = await store.signup({
+        email: 'taken@example.com',
+        name: 'A',
+        password: 'hunter2hunter2'
+      })
 
       expect(ok).toBe(false)
       expect(store.isAuthenticated).toBe(false)
@@ -124,7 +133,7 @@ describe('auth store', () => {
     it('reports one message for bad credentials, without hinting which half was wrong', async () => {
       const store = storeWith({
         login: async () => {
-          throw new AuthError('INVALID_CREDENTIALS', 'Invalid credentials.')
+          throw new AuthError(AuthErrorCode.InvalidCredentials, 'Invalid credentials.')
         }
       })
 
@@ -150,7 +159,7 @@ describe('auth store', () => {
     it('clears the user locally even when the server call fails', async () => {
       const store = storeWith({
         logout: async () => {
-          throw new AuthError('NETWORK_ERROR', 'boom')
+          throw new AuthError(AuthErrorCode.NetworkError, 'boom')
         }
       })
       await store.fetchMe()
@@ -196,7 +205,7 @@ describe('auth store', () => {
       store.expire()
 
       expect(store.error).toBeNull()
-      expect(store.status).toBe('idle')
+      expect(store.status).toBe(AuthStatus.Idle)
     })
   })
 
@@ -216,7 +225,7 @@ describe('auth store', () => {
     it('reads a 401 here as a wrong current password, not an expired session', async () => {
       const store = storeWith({
         updateProfile: async () => {
-          throw new AuthError('INVALID_CREDENTIALS', 'Invalid credentials.')
+          throw new AuthError(AuthErrorCode.InvalidCredentials, 'Invalid credentials.')
         }
       })
       await store.fetchMe()
@@ -232,7 +241,7 @@ describe('auth store', () => {
     it('surfaces the server message for a validation error it has no fixed copy for', async () => {
       const store = storeWith({
         updateProfile: async () => {
-          throw new AuthError('VALIDATION_ERROR', 'avatarUrl must be a data URL.')
+          throw new AuthError(AuthErrorCode.ValidationError, 'avatarUrl must be a data URL.')
         }
       })
 
@@ -263,7 +272,7 @@ describe('auth store', () => {
 
     it('never toasts, whichever action fails', async () => {
       const boom = async () => {
-        throw new AuthError('NETWORK_ERROR', 'boom')
+        throw new AuthError(AuthErrorCode.NetworkError, 'boom')
       }
       const store = storeWith({
         signup: boom,

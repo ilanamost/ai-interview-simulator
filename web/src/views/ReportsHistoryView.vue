@@ -202,9 +202,11 @@ watch(form, load)
       </button>
     </form>
 
-    <p v-if="store.isBusy" class="text-muted">Loading your reports…</p>
-
-    <div v-else-if="store.list.length" class="stack history-list">
+    <!--
+      Nothing renders here while a read is in flight: the global API loader covers it,
+      and showing the empty state before the read settles would flash a wrong answer.
+    -->
+    <div v-if="!store.isBusy && store.list.length" class="stack history-list">
       <RouterLink
         v-for="item in store.list"
         :key="item.id"
@@ -229,7 +231,7 @@ watch(form, load)
       </RouterLink>
     </div>
 
-    <div v-else class="empty-state stack">
+    <div v-else-if="!store.isBusy" class="empty-state stack">
       <p v-if="store.hasFilters">No interviews match these filters.</p>
       <template v-else>
         <p>You have not finished an interview yet.</p>

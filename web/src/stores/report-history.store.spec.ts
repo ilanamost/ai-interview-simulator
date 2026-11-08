@@ -11,6 +11,8 @@ import type {
   ReportHistorySource
 } from '@/services/report-history.service'
 import type { InterviewSummary } from '@/types/interview'
+import { InterviewErrorCode } from '@/types/interview'
+import { AuthErrorCode } from '@/types/auth'
 import { signIn } from '@/test/auth-fixture'
 
 function makeSummary(overrides: Partial<InterviewSummary> = {}): InterviewSummary {
@@ -163,7 +165,8 @@ describe('report history store', () => {
   it('records a user-safe message and rethrows when the list fails', async () => {
     const store = useReportHistoryStore()
     store.setSource(
-      makeStubSource({ failWith: new InterviewError('INTERNAL_ERROR', 'Could not load.') }).source
+      makeStubSource({ failWith: new InterviewError(InterviewErrorCode.Internal, 'Could not load.') })
+        .source
     )
 
     await expect(store.fetchList()).rejects.toBeInstanceOf(InterviewError)
@@ -189,7 +192,8 @@ describe('report history store', () => {
     const auth = useAuthStore()
     const store = useReportHistoryStore()
     store.setSource(
-      makeStubSource({ failWith: new InterviewError('UNAUTHENTICATED', 'Signed out.') }).source
+      makeStubSource({ failWith: new InterviewError(AuthErrorCode.Unauthenticated, 'Signed out.') })
+        .source
     )
 
     await expect(store.fetchList()).rejects.toBeInstanceOf(InterviewError)
